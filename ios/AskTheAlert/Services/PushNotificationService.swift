@@ -30,15 +30,16 @@ actor PushNotificationService {
     private let maxRetries = 10
 
     init() {
-        // Load previously registered token
-        registeredToken = UserDefaults.standard.string(forKey: Self.registeredTokenKey)
+        // Load previously registered token (inline, nonisolated-safe for Swift 6)
+        let storedToken = UserDefaults.standard.string(forKey: Self.registeredTokenKey)
+        let pendingToken = UserDefaults.standard.string(forKey: Self.pendingTokenKey)
+        registeredToken = storedToken
 
         // Check if there's a pending token from a previous failed registration
-        Task {
-            if let pendingToken = UserDefaults.standard.string(forKey: Self.pendingTokenKey),
-               pendingToken != registeredToken {
+        if let pending = pendingToken, pending != storedToken {
+            Task {
                 print("📱 Retrying pending device token registration")
-                await registerDeviceToken(pendingToken)
+                await self.registerDeviceToken(pending)
             }
         }
     }

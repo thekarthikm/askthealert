@@ -11,7 +11,7 @@ import AVFoundation
 
 struct MicPermissionView: View {
     @Binding var isGranted: Bool
-    @State private var permissionStatus: AVAudioSession.RecordPermission = .undetermined
+    @State private var permissionStatus: AVAudioApplication.RecordPermission = .undetermined
 
     var body: some View {
         VStack(spacing: 24) {
@@ -102,15 +102,23 @@ struct MicPermissionView: View {
     }
 
     private func checkPermission() {
-        permissionStatus = AVAudioSession.sharedInstance().recordPermission
+        permissionStatus = AVAudioApplication.shared.recordPermission
         isGranted = permissionStatus == .granted
     }
 
     private func requestPermission() {
-        AVAudioSession.sharedInstance().requestRecordPermission { granted in
-            DispatchQueue.main.async {
-                self.isGranted = granted
-                if !granted {
+        Task {
+            do {
+                let granted = try await AVAudioApplication.requestRecordPermission()
+                await MainActor.run {
+                    self.isGranted = granted
+                    if !granted {
+                        self.permissionStatus = .denied
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.isGranted = false
                     self.permissionStatus = .denied
                 }
             }

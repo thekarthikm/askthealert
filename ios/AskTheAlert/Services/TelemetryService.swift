@@ -47,8 +47,11 @@ actor TelemetryService {
     private var isUploading = false
 
     init() {
-        // Load persisted queue
-        loadPersistedQueue()
+        // Load persisted queue synchronously from UserDefaults (nonisolated-safe)
+        if let data = UserDefaults.standard.data(forKey: Self.queueKey),
+           let events = try? JSONDecoder().decode([TelemetryEventModel].self, from: data) {
+            eventQueue = events
+        }
 
         // Start periodic upload
         Task { await self.startPeriodicUpload() }
@@ -245,20 +248,8 @@ actor TelemetryService {
         }
     }
 
-    /// Load the event queue from UserDefaults on startup.
-    private func loadPersistedQueue() {
-        guard let data = UserDefaults.standard.data(forKey: Self.queueKey) else { return }
-        do {
-            let events = try JSONDecoder().decode([TelemetryEventModel].self, from: data)
-            eventQueue = events
-            if !events.isEmpty {
-                print("📊 Restored \(events.count) telemetry events from disk")
-            }
-        } catch {
-            print("⚠️ Failed to load persisted telemetry queue: \(error)")
-            UserDefaults.standard.removeObject(forKey: Self.queueKey)
-        }
-    }
+    // Queue loading is done inline in init() to satisfy Swift 6 actor isolation rules.
+    // (Actor init is nonisolated, so we cannot call isolated methods from it.)
 
     // MARK: - Upload
 

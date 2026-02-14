@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -33,6 +33,7 @@
 		E329A83347CA2A3BEC4D8649 /* Incident.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B85D937A238320F90BF1CC /* Incident.swift */; };
 		E80517E051FCACCF603A9078 /* ModelDownloadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36726DBBF3B5CD9E28C89F3C /* ModelDownloadView.swift */; };
 		FACA4538F5AC59CC6F679034 /* PushNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D895607E6FA4AB44AB7FEDFC /* PushNotificationService.swift */; };
+		A1B2C3D4E5F6071829304B5C /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E8D9CA0B1C2D3E4F506172 /* NetworkMonitor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,7 +51,7 @@
 		52A9664A7AC2224237C7CB21 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5A1C792616AD90DD3FC86154 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		76CB25FB1499905EE1A5837B /* RunAnywhereManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunAnywhereManager.swift; sourceTree = "<group>"; };
-		7D4688A1457D1DAC4A8DB92D /* AskTheAlert.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AskTheAlert.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7D4688A1457D1DAC4A8DB92D /* AskTheAlert.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AskTheAlert.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		87CDA62BC2A5AB51CB356575 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8FF2D5F98DD8615E58B899A5 /* TelemetryEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryEvent.swift; sourceTree = "<group>"; };
 		909F2BD2AEF2A15915976E3A /* tornado_guidance.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = tornado_guidance.json; sourceTree = "<group>"; };
@@ -61,6 +62,7 @@
 		D895607E6FA4AB44AB7FEDFC /* PushNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationService.swift; sourceTree = "<group>"; };
 		DA2AF01EAB56E5196A4E0DCD /* AskTheAlertApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskTheAlertApp.swift; sourceTree = "<group>"; };
 		E92DF82FE7D90AF1FE698900 /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
+		F7E8D9CA0B1C2D3E4F506172 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +91,7 @@
 			isa = PBXGroup;
 			children = (
 				1A3CC8F70558B2E13FDB7963 /* AudioSessionManager.swift */,
+				F7E8D9CA0B1C2D3E4F506172 /* NetworkMonitor.swift */,
 				D895607E6FA4AB44AB7FEDFC /* PushNotificationService.swift */,
 				25FEFEB97F8BA85B89BD54BC /* RAGService.swift */,
 				76CB25FB1499905EE1A5837B /* RunAnywhereManager.swift */,
@@ -199,7 +202,6 @@
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					860B5DF2581F8D6483F75698 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -217,7 +219,6 @@
 			packageReferences = (
 				DE1F438409B49909EC224CB1 /* XCRemoteSwiftPackageReference "runanywhere-sdks" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -259,6 +260,7 @@
 				06321E1C6F79B93E71D4DFF1 /* RunAnywhereManager.swift in Sources */,
 				442E77ED742667102B741A57 /* SafetyEscalationView.swift in Sources */,
 				3906DE2EDFDAB9BC96A37F21 /* TelemetryEvent.swift in Sources */,
+				A1B2C3D4E5F6071829304B5C /* NetworkMonitor.swift in Sources */,
 				28BE193DDBA2E7D1421E6B05 /* TelemetryService.swift in Sources */,
 				5DA7F6A3901C2AD296F0B961 /* TranscriptView.swift in Sources */,
 				9C83ABA802862792E843E3D5 /* UpdateModel.swift in Sources */,
@@ -277,9 +279,12 @@
 				CODE_SIGN_ENTITLEMENTS = AskTheAlert/AskTheAlert.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 4TN23K5FMT;
 				INFOPLIST_FILE = AskTheAlert/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.askthealert.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -418,9 +423,12 @@
 				CODE_SIGN_ENTITLEMENTS = AskTheAlert/AskTheAlert.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 4TN23K5FMT;
 				INFOPLIST_FILE = AskTheAlert/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.askthealert.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

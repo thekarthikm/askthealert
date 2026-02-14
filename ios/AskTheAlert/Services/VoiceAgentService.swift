@@ -485,16 +485,18 @@ class VoiceAgentService: ObservableObject {
     // MARK: - Microphone Permission
 
     /// Request microphone permission. Returns true if granted.
+    /// Uses AVAudioApplication (iOS 17+) instead of deprecated AVAudioSession.recordPermission.
     private func requestMicrophonePermission() async -> Bool {
-        let status = AVAudioSession.sharedInstance().recordPermission
+        let status = AVAudioApplication.shared.recordPermission
         switch status {
         case .granted:
             return true
         case .undetermined:
-            return await withCheckedContinuation { continuation in
-                AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                    continuation.resume(returning: granted)
-                }
+            do {
+                return try await AVAudioApplication.requestRecordPermission()
+            } catch {
+                print("⚠️ Microphone permission request failed: \(error)")
+                return false
             }
         case .denied:
             return false
