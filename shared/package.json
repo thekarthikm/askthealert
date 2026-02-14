@@ -1,0 +1,23 @@
+{
+  "name": "@askthealert/shared",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared TypeScript types for Ask the Alert (Alert, Update, TelemetryEvent, IntentCategory)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}

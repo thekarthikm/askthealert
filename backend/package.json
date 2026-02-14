@@ -1,0 +1,36 @@
+{
+  "name": "@askthealert/backend",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Ask the Alert – Node.js/Express backend (APNs, telemetry, device tokens, online RAG)",
+  "type": "module",
+  "main": "./dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc --project tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@askthealert/shared": "*",
+    "@parse/node-apn": "^7.1.0",
+    "@supabase/supabase-js": "^2.93.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.15.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

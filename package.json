@@ -1,0 +1,24 @@
+{
+  "name": "askthealert",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Ask the Alert – voice-first emergency alert companion with authority console",
+  "workspaces": [
+    "shared",
+    "backend",
+    "authority-console"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:console": "npm run dev --workspace=authority-console",
+    "build:shared": "npm run build --workspace=shared",
+    "build:backend": "npm run build --workspace=backend",
+    "build:console": "npm run build --workspace=authority-console",
+    "build:all": "npm run build:shared && npm run build:backend && npm run build:console",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

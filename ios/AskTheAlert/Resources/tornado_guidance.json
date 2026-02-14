@@ -1,0 +1,589 @@
+[
+  {
+    "id": "watch-vs-warning-001",
+    "title": "Tornado Watch vs Tornado Warning – Key Differences",
+    "content": "A Tornado Watch means conditions are favourable for tornado development — get ready to take shelter. A Tornado Warning means a tornado has been detected or is imminent — take shelter immediately. Environment Canada uses colour-coded alerts: Yellow for a Watch, Red for a Warning. When a Watch is issued, review your emergency plan, charge your phone, and identify your shelter location. When a Warning is issued, move to your shelter immediately. Do not wait to see the tornado.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario", "canada"],
+    "citation": "Environment Canada – Public Weather Alerting Program | https://www.canada.ca/en/environment-climate-change/services/general-marine-weather-information/regional-guides/public-alerting-program.html",
+    "keywords": ["watch", "warning", "difference", "tornado watch", "tornado warning", "yellow", "red", "alert", "what does it mean"],
+    "synonyms": {
+      "watch": ["advisory", "heads up", "get ready"],
+      "warning": ["emergency", "imminent", "take cover", "act now"],
+      "difference": ["distinction", "compare", "versus", "vs"]
+    }
+  },
+  {
+    "id": "watch-actions-002",
+    "title": "What to Do During a Tornado Watch",
+    "content": "During a Tornado Watch, take these preparatory steps: Monitor Environment Canada weather alerts via the WeatherCAN app, Weather Radio, or weather.gc.ca. Charge your mobile phone. Review your family emergency plan and ensure everyone knows where to shelter. Move pets indoors. Secure or bring in outdoor objects that could become projectiles (patio furniture, garbage bins, garden tools). Close all windows and exterior doors. Prepare your emergency kit with water, flashlight, first aid supplies, and important medications. If you are in a mobile home, identify a nearby sturdy building to shelter in.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "AlertWR – Before An Emergency | https://www.alertwr.ca/en/emergency-management/before-an-emergency.aspx",
+    "keywords": ["watch", "prepare", "ready", "what to do", "before", "charge", "phone", "plan", "kit", "secure"],
+    "synonyms": {
+      "prepare": ["get ready", "make ready", "plan ahead"],
+      "kit": ["supplies", "emergency kit", "bag", "go bag"]
+    }
+  },
+  {
+    "id": "shelter-general-003",
+    "title": "Tornado Shelter Guidance – Houses and General Buildings",
+    "content": "Go to the lowest level of the building immediately. Move to an interior room or hallway away from all windows, doors, and exterior walls. A basement is the safest location. If in a basement, get under a sturdy workbench, table, or staircase. Cover yourself with a mattress, sleeping bag, or thick blankets to protect against flying debris. Protect your head and neck with your arms. Stay away from heavy appliances on the floor above that could fall through. Do not open windows — this is a myth that wastes precious time.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "City of Waterloo Emergency Preparedness | Environment Canada – Tornado Safety",
+    "keywords": ["shelter", "basement", "lowest level", "interior room", "safe room", "hide", "protection", "house", "home", "where to go"],
+    "synonyms": {
+      "shelter": ["hide", "safe place", "protection", "cover", "take cover"],
+      "basement": ["lower level", "underground", "cellar", "downstairs"],
+      "house": ["home", "residence", "dwelling"]
+    }
+  },
+  {
+    "id": "shelter-apartment-004",
+    "title": "Tornado Shelter – Apartments, Condos, and High-Rises",
+    "content": "In a high-rise, condo, or apartment building, go to the lowest floor you can safely reach. Move to an interior hallway, bathroom, or closet away from windows. Do NOT use the elevator during a tornado warning — take the stairs. If you cannot get to a lower floor, take shelter in the most interior room on your current floor, as far from exterior walls and windows as possible. Get under a sturdy piece of furniture. In a bathroom, lie in the bathtub and cover yourself with a mattress or heavy blankets. Close all interior doors between you and the outside — each door provides an additional barrier.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada – Tornado Safety | City of Waterloo Emergency Preparedness",
+    "keywords": ["condo", "apartment", "high-rise", "elevator", "interior", "hallway", "bathroom", "building", "flat", "unit", "stairs"],
+    "synonyms": {
+      "condo": ["apartment", "flat", "unit", "high-rise", "building", "tower"],
+      "elevator": ["lift", "escalator"]
+    }
+  },
+  {
+    "id": "shelter-driving-005",
+    "title": "Tornado Safety While Driving",
+    "content": "If you are driving and see a tornado or receive a tornado warning, do NOT try to outrun it — tornadoes can change direction unpredictably. If a sturdy building is nearby, pull over safely and go inside to the lowest floor interior room. If no building is available, pull over to a low-lying area, turn off your engine, get out of the car, and lie flat face-down in a ditch or low spot, covering your head with your arms. Do NOT shelter under a bridge or overpass — wind speeds dramatically increase in these narrow spaces. If you absolutely cannot safely stop, drive at right angles away from the tornado's path to the nearest shelter.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada – Tornado Safety | Canadian Red Cross – Tornadoes",
+    "keywords": ["driving", "car", "vehicle", "road", "outrun", "ditch", "overpass", "bridge", "highway", "commuting"],
+    "synonyms": {
+      "driving": ["in the car", "on the road", "commuting", "travelling", "in my vehicle"],
+      "ditch": ["low area", "depression", "low spot", "gully"]
+    }
+  },
+  {
+    "id": "shelter-mobile-home-006",
+    "title": "Tornado Safety – Mobile Homes and Manufactured Housing",
+    "content": "If you live in a mobile or manufactured home, evacuate immediately when a tornado warning is issued. Mobile homes cannot withstand tornado-force winds even with tie-downs and can be overturned. Go to the nearest sturdy building — preferably one with a basement. Many manufactured home communities have designated tornado shelters or community centres. Identify your nearest shelter before tornado season. If no sturdy building is available, lie flat in a ditch or low-lying area away from trees and vehicles, and cover your head. Never try to ride out a tornado in a mobile home.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Environment Canada – Tornado Safety | Canadian Red Cross – Tornadoes | https://www.redcross.ca/how-we-help/emergencies-and-disasters-in-canada/types-of-emergencies/tornadoes",
+    "keywords": ["mobile home", "manufactured home", "trailer", "trailer park", "evacuate", "leave", "tie-down"],
+    "synonyms": {
+      "mobile home": ["trailer", "manufactured home", "park home", "modular home"],
+      "evacuate": ["leave", "get out", "flee"]
+    }
+  },
+  {
+    "id": "shelter-workplace-007",
+    "title": "Tornado Safety at Work or School",
+    "content": "At work or school, follow the building's emergency procedures. Move to the designated shelter area — typically an interior room on the lowest floor, such as a hallway, restroom, or storage room. Stay away from large open areas like gymnasiums, cafeterias, and auditoriums where roofs are more likely to collapse. If your workplace does not have a designated shelter, go to an interior room away from windows. Get under desks or tables if possible. Do not leave the building to go to your car during a tornado warning.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "University of Waterloo – Shelter in Place Procedures | https://uwaterloo.ca/emergency-planning/emergency-preparedness/shelter-place",
+    "keywords": ["work", "school", "office", "workplace", "classroom", "gym", "cafeteria", "desk"],
+    "synonyms": {
+      "work": ["office", "workplace", "job", "building"],
+      "school": ["classroom", "university", "college", "campus"]
+    }
+  },
+  {
+    "id": "shelter-uwaterloo-008",
+    "title": "University of Waterloo Shelter-in-Place Procedures",
+    "content": "At the University of Waterloo, shelter in place means finding a safe indoor location and staying there until you receive an all-clear or evacuation order. Put as many walls between yourself and the outdoors as possible. Head to the lowest floor available — basements are ideal. If you are outside on campus, go indoors immediately. If already indoors, stay there. Stop classes or work and keep people indoors rather than allowing them to leave. Avoid unnecessary phone use to keep emergency lines available. Wait in the safest location until the university issues an all-clear, evacuation order, or further instructions.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "city_of_waterloo"],
+    "citation": "University of Waterloo – Emergency Planning: Shelter in Place | https://uwaterloo.ca/emergency-planning/emergency-preparedness/shelter-place",
+    "keywords": ["university", "waterloo", "uwaterloo", "campus", "shelter in place", "all clear", "indoor", "student"],
+    "synonyms": {
+      "university": ["campus", "school", "UW", "uwaterloo"],
+      "all clear": ["safe", "over", "ended", "clear to leave"]
+    }
+  },
+  {
+    "id": "shelter-outdoors-009",
+    "title": "Tornado Safety When Outdoors (Parks, Fields, Open Areas)",
+    "content": "If you are outdoors and cannot reach a sturdy building quickly, lie flat face-down in the nearest ditch, ravine, or low-lying area. Cover your head and neck with your arms. Stay away from trees, cars, and other objects that could be thrown. Do not seek shelter under trees, which can be uprooted. If you are near a sturdy building, go inside immediately. Open fields are dangerous — get to low ground. If you are at an outdoor event, leave immediately and seek indoor shelter. Do not try to outrun a tornado on foot.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada – Tornado Safety | Canadian Red Cross",
+    "keywords": ["outside", "outdoors", "park", "field", "open", "walking", "running", "hiking", "garden", "yard"],
+    "synonyms": {
+      "outside": ["outdoors", "exterior", "open air", "in the park", "in the yard"],
+      "ditch": ["ravine", "low ground", "depression"]
+    }
+  },
+  {
+    "id": "evac-general-010",
+    "title": "Evacuation Guidance – Waterloo Region",
+    "content": "Do NOT evacuate during a tornado warning unless directed by emergency officials. Tornadoes move fast and driving during a tornado warning puts you at greater risk on the road than sheltering in a building. If authorities issue an official evacuation order, follow designated routes posted by the Region of Waterloo Emergency Management. Bring essential items: prescription medications, government-issued ID, phone and charger, water bottles, and any special items for children or those with medical needs. Lock your home and follow the routes indicated — do not take shortcuts.",
+    "hazardTags": ["tornado", "evacuation"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo Emergency Management | AlertWR – Emergency Alerts",
+    "keywords": ["evacuate", "leave", "evacuation", "routes", "order", "stay", "go", "should I leave", "should I stay"],
+    "synonyms": {
+      "evacuate": ["leave", "get out", "flee", "go away", "run"],
+      "stay": ["remain", "shelter in place", "don't leave"]
+    }
+  },
+  {
+    "id": "area-waterloo-011",
+    "title": "Affected Area – Waterloo Region Tornado Coverage",
+    "content": "Tornado warnings for Waterloo Region typically cover the cities of Waterloo, Kitchener, and Cambridge, plus surrounding townships including Woolwich, Wilmot, Wellesley, and North Dumfries. The exact affected area is defined by latitude/longitude coordinates in the official Environment Canada warning. Check the WeatherCAN app or weather.gc.ca for the specific boundaries of the warning area. Subscribe to AlertWR for local notifications specific to Waterloo Region. Municipal emergency alerts may come from any of the seven area municipalities.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "kitchener", "cambridge", "woolwich", "wilmot", "wellesley", "north_dumfries"],
+    "citation": "Environment Canada Weather Alerts | AlertWR – Emergency Alerts | https://www.alertwr.ca/en/emergency-alerts/emergency-alerts.aspx",
+    "keywords": ["area", "zone", "affected", "waterloo", "kitchener", "cambridge", "boundaries", "neighbourhood", "where", "location", "coverage"],
+    "synonyms": {
+      "area": ["zone", "region", "neighbourhood", "district", "location"],
+      "affected": ["impacted", "included", "covered", "hit"]
+    }
+  },
+  {
+    "id": "duration-status-012",
+    "title": "Tornado Warning Duration, Status, and All-Clear",
+    "content": "Tornado warnings are typically in effect for 30 minutes to 1 hour. Environment Canada may extend, update, or cancel the warning based on radar observations and spotter reports. Do NOT leave shelter until you receive an official all-clear from local authorities — the absence of noise does not mean it is safe. Check Environment Canada's website at weather.gc.ca, the WeatherCAN app, or Weatheradio for the latest status. Listen to local media (570 NEWS Kitchener, CTV Kitchener) for updates. If you received the alert via AlertWR, you will also receive an update when the warning is lifted.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada | AlertWR – FAQ | https://www.alertwr.ca/en/emergency-alerts/faq.aspx",
+    "keywords": ["how long", "duration", "over", "ended", "all clear", "status", "active", "cancelled", "when safe", "is it over"],
+    "synonyms": {
+      "how long": ["duration", "when does it end", "time", "how much longer"],
+      "over": ["ended", "finished", "done", "cancelled", "safe to leave", "safe to go outside"]
+    }
+  },
+  {
+    "id": "allclear-after-013",
+    "title": "After the All-Clear – Immediate Post-Tornado Safety",
+    "content": "After the all-clear is given, proceed with extreme caution. Watch for downed power lines — stay at least 10 metres away and call 911 if you see them. Avoid damaged buildings until they have been inspected. Check yourself and others for injuries. Do not light matches or use lighters until you are sure there are no gas leaks — if you smell gas, leave immediately and call 911. Wear sturdy shoes and gloves when walking through debris. Do not enter flooded basements if water covers electrical outlets. Take photos of all damage before moving anything for insurance purposes.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada | Region of Waterloo Emergency Management | Hydro One – Storm Safety",
+    "keywords": ["after", "all clear", "safe", "damage", "inspect", "power line", "gas", "debris", "cleanup", "safe to go out", "is it over"],
+    "synonyms": {
+      "after": ["post", "following", "when it's over", "once clear"],
+      "cleanup": ["clean up", "clearing", "recovery"]
+    }
+  },
+  {
+    "id": "powerlines-electrical-014",
+    "title": "Downed Power Lines and Electrical Hazards After a Tornado",
+    "content": "Stay at least 10 metres (about the length of a school bus) away from any downed power lines, as they may still be energised and can electrocute you. Electricity can travel through water, wet ground, and metal objects near the line. Call 911 and your local electricity distributor immediately. If a power line falls on your car, stay inside the vehicle and call 911 — only leave if the vehicle is on fire, and if you must exit, jump clear with both feet together and shuffle away in small steps. Do not touch any electrical equipment that has been exposed to water. Wait until Hydro crews confirm the area is safe before beginning any yard cleanup, as lines may be hidden under branches.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Hydro One – Storm Safety | Electrical Safety Authority (ESA) | https://www.hydroone.com/power-outages-and-safety/storm-safety-tips",
+    "keywords": ["power line", "downed", "electrical", "shock", "electrocution", "hydro", "wire", "live wire", "fallen wire"],
+    "synonyms": {
+      "power line": ["hydro line", "wire", "electrical line", "cable"],
+      "downed": ["fallen", "on the ground", "down", "dropped"]
+    }
+  },
+  {
+    "id": "water-utilities-015",
+    "title": "Water Safety and Utilities After a Tornado",
+    "content": "After a tornado, water mains may be damaged. If you notice discoloured water, low pressure, or a boil water advisory is issued, use bottled water for drinking and cooking until the advisory is lifted. Report broken water mains or gas leaks to the Region of Waterloo at 519-575-4400. If you smell gas, leave the building immediately without turning on any switches, and call 911 from outside. Power outages may last hours or days — do not open your fridge or freezer unnecessarily. Food in a closed fridge stays safe for approximately 4 hours, and a full freezer for about 48 hours.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Water Services | https://regionofwaterloo.ca",
+    "keywords": ["water", "safe", "drink", "boil", "gas", "leak", "utilities", "power", "hydro", "outage", "food", "fridge"],
+    "synonyms": {
+      "water": ["drinking water", "tap water", "running water"],
+      "utilities": ["power", "hydro", "electricity", "gas", "services"]
+    }
+  },
+  {
+    "id": "roads-travel-016",
+    "title": "Road Closures and Travel Safety During and After a Tornado",
+    "content": "During a tornado warning, avoid all unnecessary travel. After the all-clear, roads may be blocked by debris, downed trees, or power lines. Check the Region of Waterloo website, local radio (570 NEWS, 91.5 The Beat), or the municipal Twitter/X accounts for road closure updates. If you encounter a downed power line on the road, stop your vehicle, stay inside, and call 911. Do not drive through standing water — it may hide downed wires or sinkholes. Turn around, don't drown. Allow emergency vehicles to pass at all times.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Transportation Services",
+    "keywords": ["road", "drive", "travel", "closure", "blocked", "debris", "power line", "highway", "commute", "traffic", "detour"],
+    "synonyms": {
+      "road": ["highway", "street", "route", "path"],
+      "closure": ["closed", "blocked", "shut", "impassable"]
+    }
+  },
+  {
+    "id": "medical-emergency-017",
+    "title": "Medical Emergencies and Injuries During a Tornado",
+    "content": "If you or someone near you is injured, call 911 immediately. Do not move a seriously injured person unless they are in immediate danger from fire, gas, or structural collapse. Apply firm, direct pressure to any wound that is bleeding heavily. If someone is trapped under debris, call 911 and do NOT attempt a rescue alone — wait for trained responders with proper equipment. For non-life-threatening injuries, go to the nearest hospital emergency department: Grand River Hospital (Kitchener), St. Mary's General Hospital (Kitchener), or Cambridge Memorial Hospital. For health advice, call Telehealth Ontario at 1-866-797-0000.",
+    "hazardTags": ["tornado", "medical"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Public Health | Ontario Telehealth",
+    "keywords": ["911", "injured", "hurt", "emergency", "bleeding", "trapped", "ambulance", "hospital", "medical", "doctor", "first aid", "help"],
+    "synonyms": {
+      "injured": ["hurt", "wounded", "harmed", "cut", "broken"],
+      "trapped": ["stuck", "pinned", "caught", "buried"]
+    }
+  },
+  {
+    "id": "kids-family-018",
+    "title": "Tornado Safety for Families with Children",
+    "content": "Keep children calm by speaking in a reassuring, steady voice. Practise your shelter plan with them so they know exactly where to go without hesitation. In your shelter location, have children sit against an interior wall with their knees to their chest and hands protecting the back of their head and neck. Bring comfort items — a favourite stuffed animal, blanket, or book — and a flashlight. Do not tell young children detailed storm damage stories during the event. After the all-clear, reassure children that they are safe and stick to routines as much as possible. If children show signs of anxiety or fear lasting more than a few days, contact a healthcare professional.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "City of Waterloo – Family Emergency Preparedness | Canadian Red Cross",
+    "keywords": ["kids", "children", "family", "baby", "toddler", "school", "calm", "scared", "anxiety", "young", "parent"],
+    "synonyms": {
+      "kids": ["children", "child", "baby", "toddler", "family", "little ones", "son", "daughter"],
+      "calm": ["reassure", "comfort", "soothe", "settle", "relax"]
+    }
+  },
+  {
+    "id": "disability-accessibility-019",
+    "title": "Tornado Safety for People with Disabilities or Mobility Challenges",
+    "content": "If you have mobility challenges, move to shelter early — when a tornado watch is issued — do not wait for the warning. Keep assistive devices (wheelchair, walker, cane, hearing aids) within reach at all times during severe weather. If you cannot get to a lower floor, shelter in the most interior room on your current floor, away from windows. If you need help evacuating or sheltering, call 911. MobilityPLUS (Region of Waterloo Accessible Transit) may be suspended during severe weather. Have a buddy system in place with a neighbour or family member who can check on you during an emergency. Ensure your emergency kit includes extra batteries for hearing aids and a backup power source for powered medical devices.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Accessibility | AlertWR",
+    "keywords": ["disability", "wheelchair", "mobility", "accessible", "assistance", "help", "deaf", "blind", "hearing aid", "walker"],
+    "synonyms": {
+      "disability": ["mobility challenge", "wheelchair user", "accessible needs", "impairment"],
+      "help": ["assistance", "support", "aid"]
+    }
+  },
+  {
+    "id": "pets-animals-020",
+    "title": "Tornado Safety for Pets and Animals",
+    "content": "Bring pets indoors as soon as a tornado watch is issued. Keep cats and dogs in carriers or on leashes during the storm for control. Take pets with you to your shelter area — do not leave them in a separate room or outside. Never leave pets chained outdoors during severe weather. Ensure pets are microchipped and have collars with current ID tags. Your pet emergency kit should include food (3 days minimum), water, medications, vaccination records, and a photograph of each pet. If you evacuate, never leave pets behind. If sheltering at an emergency centre, check in advance whether it accepts animals. For large animals (horses, livestock), open stall doors so they can flee if the structure is damaged.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Ontario SPCA – Emergency Preparedness | Animal Emergency Task Force (AETF) | https://aetf.ca",
+    "keywords": ["pet", "dog", "cat", "animal", "horse", "livestock", "carrier", "leash", "microchip"],
+    "synonyms": {
+      "pet": ["dog", "cat", "animal", "furry friend", "companion animal"],
+      "carrier": ["crate", "kennel", "cage"]
+    }
+  },
+  {
+    "id": "emergency-kit-021",
+    "title": "72-Hour Emergency Kit Checklist",
+    "content": "Every household in Waterloo Region should have an emergency kit ready with supplies for at least 72 hours. Include: water (2 litres per person per day), non-perishable food and a manual can opener, battery-powered or hand-crank flashlight and radio (with extra batteries), first aid kit, medications (7-day supply) and copies of prescriptions, whistle to signal for help, dust masks to filter debris, local maps, cash in small bills, phone charger (battery pack), important documents in a waterproof bag (ID, insurance papers, medical information), and sanitation supplies (garbage bags, moist towelettes, toilet paper). Store the kit somewhere easy to grab quickly.",
+    "hazardTags": ["tornado", "preparedness"],
+    "regionTags": ["waterloo_region"],
+    "citation": "AlertWR – Before An Emergency | GetPrepared.gc.ca | https://www.alertwr.ca/en/emergency-management/before-an-emergency.aspx",
+    "keywords": ["kit", "supplies", "emergency kit", "72 hours", "checklist", "water", "food", "flashlight", "radio", "first aid", "prepare", "bag"],
+    "synonyms": {
+      "kit": ["supplies", "bag", "go bag", "emergency supplies", "preparedness kit"],
+      "prepare": ["get ready", "make ready", "plan ahead", "stock up"]
+    }
+  },
+  {
+    "id": "reporting-severe-weather-022",
+    "title": "Reporting Severe Weather Sightings",
+    "content": "If you witness a tornado, funnel cloud, or significant storm damage, report it to Environment Canada at 1-800-239-0484 or via the WeatherCAN app after you are safely in shelter. Do NOT approach the tornado or damaged areas to take photos — your safety is the priority. You can also report damage to the Region of Waterloo at 519-575-4400. Severe weather reports from citizens help Environment Canada verify conditions and issue or update warnings, potentially saving lives. Include your location, the time of observation, and a description of what you saw.",
+    "hazardTags": ["tornado", "reporting"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada – Severe Weather Reporting",
+    "keywords": ["report", "witness", "saw", "funnel", "cloud", "damage", "spotted", "environment canada", "phone number"],
+    "synonyms": {
+      "report": ["tell", "notify", "inform", "call in", "let them know"],
+      "saw": ["witnessed", "spotted", "observed", "noticed", "seen"]
+    }
+  },
+  {
+    "id": "alertwr-how-it-works-023",
+    "title": "How AlertWR Works – Receiving Emergency Notifications",
+    "content": "AlertWR (Alert Waterloo Region) is the local emergency notification service run by the Region of Waterloo, its seven municipalities, and Waterloo Regional Police. It delivers alerts via telephone, cell phone, text message, and email. As a hydro customer in the region, you are automatically subscribed. You can also subscribe directly at alertwr.ca. When you receive an alert: read the message carefully and follow the instructions. Do not call 911 unless you need immediate personal assistance — emergency services are already responding. Stay tuned to local media (570 NEWS, CTV Kitchener, CBC Kitchener-Waterloo) for updates.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "AlertWR – FAQ | https://www.alertwr.ca/en/emergency-alerts/faq.aspx",
+    "keywords": ["alertwr", "alert", "notification", "subscribe", "phone", "text", "email", "how", "receive", "sign up"],
+    "synonyms": {
+      "notification": ["alert", "message", "warning", "notice"],
+      "subscribe": ["sign up", "register", "opt in", "join"]
+    }
+  },
+  {
+    "id": "signs-tornado-024",
+    "title": "Recognizing Tornado Warning Signs",
+    "content": "Even before an official warning, watch for these tornado signs: a dark, often greenish-coloured sky; large, dark, low-lying clouds, especially if rotating; a loud roar similar to a freight train; large hail (often precedes a tornado); a visible rotating funnel extending from the cloud base; debris cloud at ground level even without a visible funnel. If you see any of these signs, treat it as an active tornado threat and take shelter immediately without waiting for an official warning. Tornadoes can develop rapidly and sometimes with less than 15 minutes of notice.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Environment Canada – Tornado Safety | Insurance Bureau of Canada",
+    "keywords": ["signs", "recognise", "recognize", "green sky", "hail", "roar", "funnel", "cloud", "rotating", "looks like", "sounds like"],
+    "synonyms": {
+      "signs": ["indicators", "symptoms", "signals", "clues", "what does it look like"],
+      "roar": ["noise", "sound", "freight train", "rumble", "loud"]
+    }
+  },
+  {
+    "id": "insurance-damage-025",
+    "title": "Filing an Insurance Claim After Tornado Damage",
+    "content": "After the all-clear, document all damage thoroughly before moving anything. Take photographs and video of every affected area, including structural damage, broken windows, water intrusion, and damaged personal property. Make a detailed list of destroyed or damaged items with estimated values. Keep all receipts for emergency repairs, temporary accommodation, meals, and cleanup costs. Contact your insurance company as soon as possible — most have 24-hour claims lines. You will need to complete a 'proof of loss' form within 30 days. Do not dispose of damaged items until your adjuster confirms. Standard home insurance in Ontario typically covers tornado wind damage. For insurance questions, contact the Insurance Bureau of Canada at 1-844-227-5422.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Insurance Bureau of Canada (IBC) | https://www.ibc.ca/insurance-basics/home/how-to-file-a-home-insurance-claim",
+    "keywords": ["insurance", "claim", "damage", "photo", "document", "adjuster", "receipt", "coverage", "property", "home insurance"],
+    "synonyms": {
+      "insurance": ["coverage", "policy", "claim"],
+      "damage": ["destruction", "loss", "broken", "wrecked"]
+    }
+  },
+  {
+    "id": "generator-safety-026",
+    "title": "Portable Generator Safety After a Tornado",
+    "content": "If using a portable generator during a power outage, NEVER run it indoors, in a garage, or in any enclosed or partially enclosed space — generators produce deadly carbon monoxide gas that is colourless and odourless. Place the generator outside, at least 6 metres from windows, doors, and vents. Never connect a portable generator directly to your home's electrical system — this creates back-feed that endangers hydro workers and neighbours. Use heavy-duty extension cords rated for outdoor use. Never refuel a running or hot generator. Install carbon monoxide detectors on every level of your home if you don't already have them. If you feel dizzy, nauseous, or get a headache, get to fresh air immediately and call 911.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Electrical Safety Authority (ESA) | Hydro One – Storm Safety",
+    "keywords": ["generator", "power outage", "carbon monoxide", "CO", "electricity", "backfeed", "portable", "fuel"],
+    "synonyms": {
+      "generator": ["portable generator", "backup power", "genset"],
+      "power outage": ["blackout", "no power", "no electricity", "lights out"]
+    }
+  },
+  {
+    "id": "mental-health-027",
+    "title": "Mental Health and Emotional Support After a Tornado",
+    "content": "Experiencing a tornado or its aftermath can be extremely stressful. It is normal to feel anxious, fearful, or upset. Talk to family, friends, or neighbours about your experience. If feelings of anxiety, sleep disturbance, irritability, or fear persist beyond a few days, seek professional support. In Waterloo Region, the Here 24/7 crisis line is available at 1-844-437-3247 for mental health support. Kids Help Phone is available at 1-800-668-6868. Take breaks from media coverage if it increases anxiety. Help neighbours, especially those who live alone or are elderly. Maintaining routines and staying connected to your community supports recovery.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Public Health | Here 24/7 Crisis Services",
+    "keywords": ["mental health", "stress", "anxiety", "scared", "upset", "crisis", "counselling", "support", "feeling", "emotional", "trauma", "ptsd"],
+    "synonyms": {
+      "mental health": ["emotional health", "wellbeing", "stress", "coping"],
+      "scared": ["afraid", "frightened", "anxious", "terrified", "worried", "panicking"]
+    }
+  },
+  {
+    "id": "basement-flood-028",
+    "title": "Flooded Basement Safety After a Tornado",
+    "content": "Do not enter a flooded basement if water covers electrical outlets, the furnace, or the electrical panel — there is a risk of electrocution. If the power is still on, call your electrical utility to disconnect power before entering. Once confirmed safe, pump water out gradually (about one-third per day) to prevent structural damage from rapid pressure changes. Wear rubber boots and waterproof gloves. Do not use gas-powered pumps indoors — carbon monoxide is deadly. Discard any food, medications, or cosmetics that contacted floodwater. Document everything with photos for your insurance claim before cleanup.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Electrical Safety Authority (ESA) | Region of Waterloo",
+    "keywords": ["flooded", "basement", "water", "flood", "pump", "electrical", "electrocution", "sewage"],
+    "synonyms": {
+      "flooded": ["underwater", "submerged", "water damage", "standing water"],
+      "basement": ["cellar", "lower level", "underground"]
+    }
+  },
+  {
+    "id": "seniors-elderly-029",
+    "title": "Tornado Safety for Seniors and Elderly Residents",
+    "content": "Seniors should move to shelter as soon as a tornado watch is issued — do not wait for the warning. Keep medications, glasses, hearing aids, dentures, and a flashlight in a small bag near your shelter location. If you live alone, establish a buddy system with a neighbour who can check on you. If you are in a care home or retirement residence, follow staff instructions. If you need help getting to shelter and no one is nearby, call 911. After the storm, be cautious walking through debris — falls and injuries from sharp objects are common. If your power goes out and you rely on electrically powered medical equipment (oxygen, CPAP), call your utility provider and 911 to report your situation.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Seniors Services | AlertWR",
+    "keywords": ["senior", "elderly", "older", "aging", "retirement", "care home", "alone", "medication", "oxygen"],
+    "synonyms": {
+      "senior": ["elderly", "older adult", "aging", "older person", "grandparent"],
+      "care home": ["retirement home", "nursing home", "long-term care", "assisted living"]
+    }
+  },
+  {
+    "id": "emergency-plan-030",
+    "title": "Creating a Family Emergency Plan",
+    "content": "Every household should have a written emergency plan that takes about 20 minutes to create. Include: a designated meeting place inside and outside your home; an out-of-area emergency contact person everyone can call; shelter locations in your home (lowest floor, interior room); special needs of family members (medications, mobility devices, pet carriers); school and daycare emergency procedures and pickup plans; how to shut off water, gas, and electricity in your home; insurance information and emergency contact numbers. Practice the plan with your family at least once a year. Keep a copy in your emergency kit and share it with your out-of-area contact.",
+    "hazardTags": ["tornado", "preparedness"],
+    "regionTags": ["waterloo_region"],
+    "citation": "AlertWR – Before An Emergency | GetPrepared.gc.ca | https://www.alertwr.ca/en/emergency-management/before-an-emergency.aspx",
+    "keywords": ["plan", "emergency plan", "family plan", "prepare", "meeting place", "contact", "practice", "drill"],
+    "synonyms": {
+      "plan": ["emergency plan", "safety plan", "preparedness plan"],
+      "practice": ["drill", "rehearse", "run through"]
+    }
+  },
+  {
+    "id": "neighbourhood-help-031",
+    "title": "Helping Your Neighbours During and After a Tornado",
+    "content": "Check on neighbours, especially those who live alone, seniors, people with disabilities, and newcomers who may not be familiar with tornado procedures. Before an emergency, exchange contact information with nearby neighbours. During a watch, knock on doors to make sure everyone is aware. After the all-clear, check on neighbours before starting your own cleanup. If someone is trapped or injured, call 911 — do not attempt an untrained rescue. Share resources: if your home has power and a neighbour's doesn't, offer to charge their phone or store their perishable food. Community support speeds recovery and saves lives.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Prepared Neighbourhood Program | AlertWR",
+    "keywords": ["neighbour", "neighbor", "help", "community", "check", "alone", "elderly", "newcomer"],
+    "synonyms": {
+      "neighbour": ["neighbor", "next door", "nearby", "community member"],
+      "help": ["assist", "support", "aid", "check on"]
+    }
+  },
+  {
+    "id": "newcomers-language-032",
+    "title": "Tornado Safety Information for Newcomers and Non-English Speakers",
+    "content": "If you are new to Canada or Waterloo Region, tornadoes may be unfamiliar. A tornado is a violently rotating column of air that extends from a thunderstorm to the ground. They can destroy buildings and are extremely dangerous. When you receive an alert, take shelter on the lowest floor of a sturdy building, in an interior room away from windows. AlertWR sends alerts in English and French. For translation or interpretation help during non-emergency situations, contact the Kitchener-Waterloo Multicultural Centre at 519-745-2531 or Immigration Partnership at 519-575-4757. Always call 911 for life-threatening emergencies — 911 operators have access to interpretation services in over 200 languages.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Immigration & Newcomer Services | AlertWR",
+    "keywords": ["newcomer", "immigrant", "language", "translate", "interpretation", "ESL", "new to canada", "first time"],
+    "synonyms": {
+      "newcomer": ["immigrant", "new arrival", "refugee", "new to canada", "international student"],
+      "translate": ["interpretation", "language help", "interpreter"]
+    }
+  },
+  {
+    "id": "tornado-season-033",
+    "title": "Tornado Season in Ontario and Waterloo Region",
+    "content": "Tornado season in Ontario typically runs from April to October, with peak activity in late June and early July. Waterloo Region averages 1 to 3 tornado events per decade, though climate change may be increasing frequency and intensity. Most tornadoes in southern Ontario are rated EF0 to EF2 on the Enhanced Fujita scale, but stronger tornadoes are possible. The most destructive tornado in the region's recent history was in 2024 near Cambridge. Stay weather-aware during peak season: check Environment Canada forecasts daily, subscribe to AlertWR, and have your emergency plan and kit ready before severe weather arrives.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Environment Canada | AlertWR – Local Risks: Weather | https://www.alertwr.ca/en/local-risks/weather.aspx",
+    "keywords": ["season", "when", "time of year", "frequency", "how often", "common", "climate", "april", "june", "july"],
+    "synonyms": {
+      "season": ["time of year", "period", "months"],
+      "frequency": ["how often", "common", "rare", "usual"]
+    }
+  },
+  {
+    "id": "safe-room-034",
+    "title": "Choosing the Best Safe Room in Your Home",
+    "content": "The best safe room is the most interior room on the lowest floor with no windows. In order of preference: a basement, a ground-floor bathroom (the pipes reinforce the walls), an interior closet, or a hallway. If your only option has windows, stay as far from them as possible and cover yourself with a mattress or heavy blankets. In a two-storey home, being under the staircase on the ground floor provides excellent protection. Stock your safe room in advance with a flashlight, shoes, a whistle, water, and a battery-powered radio. Know how to get there in the dark — practise with your eyes closed.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada – Tornado Safety | City of Waterloo Emergency Preparedness",
+    "keywords": ["safe room", "best place", "where", "bathroom", "closet", "hallway", "interior", "no windows", "which room"],
+    "synonyms": {
+      "safe room": ["shelter spot", "safe place", "best room", "safest room"],
+      "bathroom": ["washroom", "restroom", "lavatory"]
+    }
+  },
+  {
+    "id": "weathercan-app-035",
+    "title": "Using the WeatherCAN App for Tornado Alerts",
+    "content": "WeatherCAN is Environment Canada's official free weather app available for iOS and Android. It sends push notifications for tornado watches and warnings based on your saved locations. Add 'Waterloo Region' or your specific city (Waterloo, Kitchener, Cambridge) as a saved location. The app shows real-time radar, current conditions, and the full text of all active weather warnings. You can also check active alerts at weather.gc.ca. In addition to WeatherCAN, consider a battery-powered weather radio tuned to Weatheradio Canada as a backup that works even when your phone has no signal or battery.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Environment Canada – WeatherCAN | weather.gc.ca",
+    "keywords": ["weathercan", "app", "radar", "forecast", "environment canada", "phone", "notification", "download"],
+    "synonyms": {
+      "app": ["application", "phone app", "mobile app"],
+      "radar": ["weather radar", "live radar", "storm tracker"]
+    }
+  },
+  {
+    "id": "emergency-contacts-036",
+    "title": "Emergency Contact Numbers – Waterloo Region",
+    "content": "Keep these emergency numbers saved in your phone: 911 for life-threatening emergencies. Region of Waterloo non-emergency line: 519-575-4400. Waterloo Regional Police non-emergency: 519-570-9777. Kitchener Utilities (gas/water emergency): 519-741-2600. Waterloo North Hydro (power): 519-888-5590. Kitchener-Wilmot Hydro: 519-745-4771. Environment Canada severe weather reports: 1-800-239-0484. Telehealth Ontario: 1-866-797-0000. Here 24/7 crisis line (mental health): 1-844-437-3247. Kids Help Phone: 1-800-668-6868. Insurance Bureau of Canada: 1-844-227-5422. Poison Control Centre: 1-800-268-9017.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo | AlertWR",
+    "keywords": ["phone", "number", "contact", "call", "911", "non-emergency", "police", "hydro", "utility", "crisis"],
+    "synonyms": {
+      "phone": ["number", "call", "dial", "telephone", "contact"],
+      "emergency": ["urgent", "crisis", "life-threatening"]
+    }
+  },
+  {
+    "id": "what-is-tornado-037",
+    "title": "What Is a Tornado – Basic Facts",
+    "content": "A tornado is a violently rotating column of air extending from the base of a thunderstorm to the ground. Tornadoes can have wind speeds ranging from 100 to over 400 kilometres per hour and can be tens of metres to over a kilometre wide. They typically travel along the ground for a few kilometres but can sometimes travel over 100 kilometres. Canada experiences approximately 60 to 80 tornadoes per year, mostly in southern Ontario and the Prairies. In Waterloo Region, tornadoes are uncommon but possible and can be extremely destructive. The Enhanced Fujita (EF) scale rates tornado intensity from EF0 (light damage) to EF5 (incredible destruction).",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario", "canada"],
+    "citation": "Environment Canada | Canadian Red Cross",
+    "keywords": ["what is", "tornado", "definition", "how", "wind speed", "EF scale", "fujita", "facts", "dangerous"],
+    "synonyms": {
+      "what is": ["define", "explain", "tell me about", "what's"],
+      "dangerous": ["deadly", "destructive", "lethal", "fatal"]
+    }
+  },
+  {
+    "id": "shelter-large-building-038",
+    "title": "Tornado Safety in Large Buildings (Malls, Stores, Warehouses)",
+    "content": "In large buildings like shopping malls, big-box stores, or warehouses, stay away from windows, glass doors, and exterior walls. Move to the most interior area of the building, away from large open roof spans. Interior restrooms, offices, or storage rooms are good options. Do not shelter near merchandise shelves that could topple. If you are in a mall, go to an interior corridor or restroom on the ground level. Avoid parking garages. Follow instructions from building staff if available. If the building has a basement or lower level, go there immediately.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada – Tornado Safety | Insurance Bureau of Canada",
+    "keywords": ["mall", "store", "warehouse", "shopping", "costco", "walmart", "big building", "commercial"],
+    "synonyms": {
+      "mall": ["shopping centre", "shopping center", "plaza", "market"],
+      "store": ["shop", "retail", "grocery"]
+    }
+  },
+  {
+    "id": "car-parking-039",
+    "title": "What to Do If You're in a Parked Car During a Tornado",
+    "content": "If a tornado warning is issued while you are in a parked car, do NOT stay in the vehicle if a sturdy building is nearby — go inside immediately to the lowest floor interior room. Cars can be thrown, rolled, or crushed by tornado-force winds. If no building is available, stay buckled in your car, put the car in park, keep the engine running, duck below the windows, and cover your head with your arms or a blanket. If you can safely reach a ditch or low area, exit the car and lie flat, covering your head. Never park under overpasses or bridges — wind accelerates in these areas.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada – Tornado Safety | Canadian Red Cross",
+    "keywords": ["car", "parked", "parking lot", "vehicle", "sit in car", "stay in car", "what to do in car"],
+    "synonyms": {
+      "car": ["vehicle", "truck", "van", "SUV", "automobile"],
+      "parked": ["sitting", "stopped", "stationary"]
+    }
+  },
+  {
+    "id": "power-outage-tips-040",
+    "title": "Managing a Power Outage After a Tornado",
+    "content": "Power outages after a tornado can last from hours to several days. Turn off and unplug appliances and electronics to prevent damage from power surges when electricity is restored. Leave one light on so you know when power returns. Keep fridge and freezer doors closed — food stays safe for about 4 hours in a closed fridge and 48 hours in a full freezer. Use flashlights, not candles, to reduce fire risk. If using a portable generator, keep it outside. Check on neighbours who may rely on electrically powered medical equipment. Report your outage to your local hydro provider. Charge devices in your car if needed, but never run a vehicle in a closed garage.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Hydro One – When the Power Goes Out | https://www.hydroone.com/power-outages-and-safety/power-goes-out",
+    "keywords": ["power outage", "blackout", "no power", "electricity", "fridge", "food", "candle", "flashlight", "charge phone"],
+    "synonyms": {
+      "power outage": ["blackout", "no power", "no electricity", "lights out", "power cut"],
+      "fridge": ["refrigerator", "freezer"]
+    }
+  },
+  {
+    "id": "cleanup-debris-041",
+    "title": "Safe Debris Cleanup After a Tornado",
+    "content": "Wait for the official all-clear before beginning any cleanup. Wear sturdy boots, long pants, work gloves, and safety goggles. Watch for nails, broken glass, and sharp metal in debris. Stay away from damaged structures that could collapse. Do not use chainsaws or power tools near downed power lines. If you see or smell gas, leave the area and call 911. Properly dispose of spoiled food from power outages. Do not burn debris — open burning is prohibited in Waterloo Region without a permit. Contact your municipality for large item and debris collection schedules. Volunteer cleanup help may be available through local churches and community organizations.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo | City of Waterloo – Public Works",
+    "keywords": ["cleanup", "clean up", "debris", "remove", "dispose", "trash", "broken", "glass", "nail"],
+    "synonyms": {
+      "cleanup": ["clean up", "clearing", "removal", "restoration"],
+      "debris": ["rubble", "wreckage", "mess", "garbage", "junk"]
+    }
+  },
+  {
+    "id": "community-emergency-response-042",
+    "title": "Community Emergency Response – Waterloo Region",
+    "content": "The Region of Waterloo's Emergency Management Office (EMO) coordinates the regional emergency response with fire, police, EMS, and public works departments across all seven municipalities. In a large-scale tornado event, the Regional Emergency Operations Centre may be activated. Reception centres for displaced residents are typically set up at community centres or schools. Follow AlertWR and local media for information on reception centre locations. The Canadian Red Cross may also be activated to provide emergency assistance including food, clothing, and temporary shelter. If you need assistance after a tornado and are not in immediate danger, call the Region at 519-575-4400.",
+    "hazardTags": ["tornado", "after"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Region of Waterloo – Emergency Response Plan | https://regionofwaterloo.ca/en/living-here/emergency-response-plan.aspx | AlertWR – Your Community Emergency Response Plan",
+    "keywords": ["community", "response", "shelter", "reception centre", "displaced", "red cross", "help", "assistance", "EMO"],
+    "synonyms": {
+      "reception centre": ["shelter", "evacuation centre", "emergency shelter"],
+      "displaced": ["homeless", "lost home", "can't go home"]
+    }
+  },
+  {
+    "id": "hail-before-tornado-043",
+    "title": "Hail and Severe Thunderstorm Preceding a Tornado",
+    "content": "Large hail often precedes a tornado. If you experience sudden heavy hail, especially larger than a quarter (2 cm), take shelter immediately as a tornado may follow. During a hailstorm, stay away from windows and skylights. If driving, pull over under a solid structure if possible, or stay in your vehicle — do not get out. Cover yourself with blankets to protect from shattered glass. After the hailstorm passes, do not assume the danger is over — monitor for tornado warnings. Hail damage to vehicles and roofs should be documented and reported to your insurance company.",
+    "hazardTags": ["tornado", "hail"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Environment Canada | Insurance Bureau of Canada – Wind and Tornado Protection",
+    "keywords": ["hail", "hailstorm", "ice", "before tornado", "precursor", "thunderstorm", "severe storm"],
+    "synonyms": {
+      "hail": ["hailstone", "ice balls", "ice pellets"],
+      "severe": ["extreme", "intense", "violent", "dangerous"]
+    }
+  },
+  {
+    "id": "dont-do-044",
+    "title": "Common Tornado Safety Myths – What NOT to Do",
+    "content": "Do NOT open windows before a tornado — this wastes precious time and does not prevent damage. Do NOT shelter under a highway overpass or bridge — wind speeds increase in these narrow spaces and you are exposed to flying debris. Do NOT try to outrun a tornado in your car unless you can clearly drive at right angles away from its path. Do NOT go outside to watch or film the tornado. Do NOT shelter in a room with many windows (like a sunroom). Do NOT light candles during a power outage if you smell gas. Do NOT return home or leave shelter before the official all-clear is given.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region", "ontario"],
+    "citation": "Environment Canada – Tornado Safety | Canadian Red Cross | Insurance Bureau of Canada",
+    "keywords": ["myth", "don't", "do not", "wrong", "mistake", "bad idea", "myth busting", "should not", "overpass"],
+    "synonyms": {
+      "myth": ["misconception", "false", "wrong", "bad advice"],
+      "don't": ["do not", "never", "avoid", "should not"]
+    }
+  },
+  {
+    "id": "night-tornado-045",
+    "title": "Tornado Safety at Night – When You Cannot See the Storm",
+    "content": "Nighttime tornadoes are especially dangerous because they are harder to see. Keep a battery-powered weather radio or the WeatherCAN app with notifications enabled beside your bed. If you hear a tornado warning at night, go to your shelter immediately — do not look out windows. Keep sturdy shoes, a flashlight, and your phone near your bed. Have children sleep on the lowest floor during severe weather watches. Protect your head with a pillow. If your community has outdoor warning sirens (Waterloo Region does not have a widespread siren system), they may not be audible indoors. Rely on your phone alerts and weather radio.",
+    "hazardTags": ["tornado"],
+    "regionTags": ["waterloo_region"],
+    "citation": "Environment Canada | AlertWR",
+    "keywords": ["night", "nighttime", "dark", "sleeping", "bed", "asleep", "can't see", "siren", "nocturnal"],
+    "synonyms": {
+      "night": ["nighttime", "dark", "evening", "late", "overnight"],
+      "sleeping": ["asleep", "in bed", "resting"]
+    }
+  }
+]

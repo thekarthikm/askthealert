@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# APNs keys
+*.p8
+certs/
+
+# iOS
+*.xcuserdata/
+*.xcworkspace/
+DerivedData/
+build/
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# IDE
+.vscode/
+*.code-workspace
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Demo / test documentation (local use)
+DEMO_CHECKLIST.md
+DEMO_NETWORKING.md
+OFFLINE_TEST_PLAN.md
