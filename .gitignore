@@ -17,6 +17,7 @@ certs/
 
 # iOS
 *.xcuserdata/
+xcuserdata/
 *.xcworkspace/
 DerivedData/
 build/
@@ -43,3 +44,4 @@ npm-debug.log*
 DEMO_CHECKLIST.md
 DEMO_NETWORKING.md
 OFFLINE_TEST_PLAN.md
+ask_the_alert_implementation_plan_612ed4f1.plan.md

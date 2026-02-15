@@ -130,7 +130,7 @@ struct IncidentView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            Text("Downloading AI models for offline voice assistance…")
+            Text("Loading AI models for offline voice assistance…")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
@@ -177,10 +177,12 @@ struct IncidentView: View {
 
     private var voiceInteractionArea: some View {
         VStack(spacing: 12) {
-            // Waveform
+            // Waveform — responds to audio input level when listening,
+            // shows gentle animation when agent is speaking.
             VoiceWaveformView(
                 isListening: viewModel.isListening,
-                audioLevel: viewModel.audioLevel
+                audioLevel: viewModel.audioLevel,
+                isSpeaking: viewModel.isSpeaking
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, 32)

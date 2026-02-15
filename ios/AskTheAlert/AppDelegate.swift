@@ -32,14 +32,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotifi
             _ = NetworkMonitor.shared
         }
 
-        // Initialize RunAnywhere SDK early for faster model readiness
-        // After initialization, warm up models for reduced first-inference latency
-        Task { @MainActor in
-            await RunAnywhereManager.shared.initialize()
-            if RunAnywhereManager.shared.status.isReady {
-                await RunAnywhereManager.shared.warmup()
-            }
-        }
+        // NOTE: RunAnywhere SDK and model loading is handled by AskTheAlertApp.swift:
+        // - First launch: SetupView runs performFirstTimeSetup() (downloads + caches models)
+        // - Subsequent launches: ContentView.task runs loadCachedModels() (fast, from cache)
+        // Do NOT initialize or load models here to avoid duplicate work.
 
         // Pre-load RAG corpus at startup so it's ready before the first incident
         Task.detached(priority: .utility) {

@@ -29,14 +29,22 @@ import ONNXRuntime
 
 // MARK: - Model Configuration
 
-/// Model IDs for each pipeline component.
+/// Model IDs and download URLs for each pipeline component.
+/// Uses the same proven models from the RunAnywhere Playground starter app.
+/// Ref: https://github.com/RunanywhereAI/runanywhere-sdks/tree/main/Playground/swift-starter-app
 enum ModelConfig {
-    /// Compact LLM for low-latency emergency responses.
-    static let llmModelId = "llama-3.2-1b-instruct-q4"
-    /// Whisper base for balanced accuracy/speed STT.
-    static let sttModelId = "whisper-base-onnx"
-    /// Piper US English neural voice for TTS.
-    static let ttsVoiceId = "piper-en-us-amy"
+    // -- Model IDs (must match IDs passed to registerModel) ----------------
+    /// LiquidAI LFM2 350M Q4_K_M — compact, fast LLM for emergency responses.
+    static let llmModelId = "lfm2-350m-q4_k_m"
+    /// Sherpa Whisper Tiny (English) — fast on-device STT.
+    static let sttModelId = "sherpa-onnx-whisper-tiny.en"
+    /// Piper TTS US English Lessac Medium — natural neural voice.
+    static let ttsVoiceId = "vits-piper-en_US-lessac-medium"
+
+    // -- Download URLs -----------------------------------------------------
+    static let llmURL = "https://huggingface.co/LiquidAI/LFM2-350M-GGUF/resolve/main/LFM2-350M-Q4_K_M.gguf"
+    static let sttURL = "https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/sherpa-onnx-whisper-tiny.en.tar.gz"
+    static let ttsURL = "https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/vits-piper-en_US-lessac-medium.tar.gz"
 }
 
 // MARK: - Model Readiness
@@ -105,159 +113,297 @@ class RunAnywhereManager: ObservableObject {
     /// Whether the voice agent pipeline is initialized and ready.
     @Published var voiceAgentReady: Bool = false
 
+    /// Whether the one-time model setup (download) has been completed.
+    /// Persisted in UserDefaults so it survives app restarts.
+    @Published var setupComplete: Bool
+
     // MARK: Private State
 
     private var isInitialized = false
+    private static let setupCompleteKey = "RunAnywhereModelsSetupComplete"
 
-    // MARK: - SDK Initialization
+    private init() {
+        self.setupComplete = UserDefaults.standard.bool(forKey: Self.setupCompleteKey)
+    }
 
-    /// Initialize the RunAnywhere SDK, register modules, download and load all models.
-    /// Call once at app launch or when first entering IncidentView.
-    func initialize() async {
+    // MARK: - SDK Initialization (internal, registers modules + SDK)
+
+    /// Register modules, initialize the SDK core, and register model URLs.
+    /// Does NOT download or load models.
+    private func initializeSDK() throws {
         guard !isInitialized else { return }
 
+        // 1. Register backend modules (LlamaCPP for LLM, ONNX for STT/TTS)
+        LlamaCPP.register()
+        ONNX.register()
+
+        // 2. Initialize the SDK
+        #if DEBUG
+        try RunAnywhere.initialize(
+            environment: .development
+        )
+        RunAnywhere.setLogLevel(.debug)
+        RunAnywhere.setDebugMode(true)
+        #else
+        try RunAnywhere.initialize(
+            apiKey: ProcessInfo.processInfo.environment["RUNANYWHERE_API_KEY"] ?? "",
+            baseURL: "https://api.runanywhere.ai",
+            environment: .production
+        )
+        #endif
+
+        // 3. Register models with download URLs
+        //    This tells the SDK *where* to fetch each model from.
+        //    Pattern follows the official Playground starter app.
+        Self.registerModels()
+
+        isInitialized = true
+    }
+
+    // MARK: - Model Registration
+
+    /// Register all models with the SDK so `downloadModel()` knows where to fetch them.
+    /// Must be called AFTER `RunAnywhere.initialize()` and BEFORE any download/load calls.
+    /// Ref: Playground/swift-starter-app/LocalAIPlayground/Services/ModelService.swift
+    private static func registerModels() {
+        // LLM — LiquidAI LFM2 350M (GGUF format, runs via LlamaCPP)
+        if let llmURL = URL(string: ModelConfig.llmURL) {
+            RunAnywhere.registerModel(
+                id: ModelConfig.llmModelId,
+                name: "LiquidAI LFM2 350M Q4_K_M",
+                url: llmURL,
+                framework: .llamaCpp,
+                memoryRequirement: 250_000_000
+            )
+        }
+
+        // STT — Sherpa Whisper Tiny English (ONNX format, tar.gz archive)
+        if let sttURL = URL(string: ModelConfig.sttURL) {
+            RunAnywhere.registerModel(
+                id: ModelConfig.sttModelId,
+                name: "Sherpa Whisper Tiny (ONNX)",
+                url: sttURL,
+                framework: .onnx,
+                modality: .speechRecognition,
+                artifactType: .archive(.tarGz, structure: .nestedDirectory),
+                memoryRequirement: 75_000_000
+            )
+        }
+
+        // TTS — Piper US English Lessac Medium (ONNX format, tar.gz archive)
+        if let ttsURL = URL(string: ModelConfig.ttsURL) {
+            RunAnywhere.registerModel(
+                id: ModelConfig.ttsVoiceId,
+                name: "Piper TTS (US English - Lessac Medium)",
+                url: ttsURL,
+                framework: .onnx,
+                modality: .speechSynthesis,
+                artifactType: .archive(.tarGz, structure: .nestedDirectory),
+                memoryRequirement: 65_000_000
+            )
+        }
+
+        print("✅ Models registered: LLM (\(ModelConfig.llmModelId)), STT (\(ModelConfig.sttModelId)), TTS (\(ModelConfig.ttsVoiceId))")
+    }
+
+    // MARK: - First-Time Setup (called once after install)
+
+    /// One-time setup: downloads models from the network, loads them into memory,
+    /// initializes the voice agent, and persists a flag so this never runs again.
+    /// Shows progress UI via published properties.
+    func performFirstTimeSetup() async {
         do {
             statusMessage = "Registering AI modules…"
+            try initializeSDK()
 
-            // 1. Register backend modules
-            LlamaCPP.register()
-            ONNX.register()
+            statusMessage = "Downloading AI models…"
+            await loadAllModels()
+            await initializeVoiceAgent()
+            await warmup()
 
-            // 2. Initialize the SDK
-            try RunAnywhere.initialize(
-                apiKey: " ",
-                baseURL: "https://api.runanywhere.ai",
-                environment: .production
-            )
+            if status.isReady {
+                // Persist so we never download again
+                UserDefaults.standard.set(true, forKey: Self.setupCompleteKey)
+                setupComplete = true
+                statusMessage = "Setup complete — offline ready"
+                print("✅ First-time setup complete. Models cached for future launches.")
+            }
+        } catch {
+            errorMessage = "Setup failed: \(error.localizedDescription)"
+            statusMessage = "Setup failed"
+            print("❌ First-time setup failed: \(error)")
+        }
+    }
 
-            isInitialized = true
-            statusMessage = "SDK initialized. Downloading models…"
+    // MARK: - Subsequent Launch (fast, loads from cache)
 
-            // 3. Download and load all models
-            await downloadAndLoadAllModels()
+    /// Called on every app launch AFTER first-time setup is done.
+    /// Models are already downloaded and cached on disk — this just loads
+    /// them into memory. Should be near-instant.
+    func loadCachedModels() async {
+        do {
+            try initializeSDK()
 
-            // 4. Initialize Voice Agent Pipeline
+            statusMessage = "Loading cached models…"
+            await loadAllModels()
             await initializeVoiceAgent()
 
-        } catch {
-            errorMessage = "SDK initialization failed: \(error.localizedDescription)"
-            statusMessage = "Initialization failed"
-            print("❌ RunAnywhere initialization failed: \(error)")
-        }
-    }
-
-    // MARK: - Model Download & Loading
-
-    /// Download and load all required models (LLM, STT, TTS) with progress tracking.
-    private func downloadAndLoadAllModels() async {
-        // Download LLM
-        await downloadModel(
-            modelId: ModelConfig.llmModelId,
-            label: "LLM",
-            updateStatus: { [weak self] s in self?.status.llmStatus = s }
-        )
-
-        // Download STT
-        await downloadModel(
-            modelId: ModelConfig.sttModelId,
-            label: "STT",
-            updateStatus: { [weak self] s in self?.status.sttStatus = s }
-        )
-
-        // Load TTS voice
-        await loadTTSVoice()
-
-        // Initialize VAD
-        await initializeVAD()
-
-        // Update overall progress
-        updateOverallProgress()
-
-        if status.isReady {
-            statusMessage = "All models ready — offline ready"
-        }
-    }
-
-    /// Download a single model with progress tracking.
-    private func downloadModel(
-        modelId: String,
-        label: String,
-        updateStatus: @escaping @MainActor (ModelReadiness) -> Void
-    ) async {
-        updateStatus(.downloading)
-        statusMessage = "Downloading \(label) model…"
-
-        do {
-            try await RunAnywhere.downloadModel(modelId)
-            updateStatus(.downloaded)
-            statusMessage = "Loading \(label) model…"
-            updateStatus(.loading)
-
-            // Load the model into memory
-            if label == "LLM" {
-                try await RunAnywhere.loadModel(modelId)
-            } else if label == "STT" {
-                try await RunAnywhere.loadSTTModel(modelId)
+            if status.isReady {
+                statusMessage = "All models ready — offline ready"
             }
-
-            updateStatus(.ready)
-            statusMessage = "\(label) ready"
-            print("✅ \(label) model loaded: \(modelId)")
         } catch {
-            updateStatus(.failed)
-            let msg = "\(label) model failed: \(error.localizedDescription)"
-            errorMessage = msg
-            print("❌ \(msg)")
+            errorMessage = "Failed to load models: \(error.localizedDescription)"
+            statusMessage = "Load failed"
+            print("❌ loadCachedModels failed: \(error)")
         }
-
-        updateOverallProgress()
     }
 
-    /// Load the TTS voice.
-    private func loadTTSVoice() async {
-        status.ttsStatus = .downloading
-        statusMessage = "Loading TTS voice…"
+    // MARK: - Model Loading
 
-        do {
-            try await RunAnywhere.loadTTSVoice(ModelConfig.ttsVoiceId)
-            status.ttsStatus = .ready
-            statusMessage = "TTS voice ready"
-            print("✅ TTS voice loaded: \(ModelConfig.ttsVoiceId)")
-        } catch {
-            // Fallback: TTS will use AVSpeechSynthesizer (system voice)
-            status.ttsStatus = .ready // Mark as ready since we have fallback
-            statusMessage = "TTS: using system voice (fallback)"
-            print("⚠️ Neural TTS failed, will use system AVSpeechSynthesizer: \(error.localizedDescription)")
-        }
-
+    /// Download (if needed) and load all required models (LLM, STT, TTS) + initialize VAD.
+    ///
+    /// For each model the pattern is (from the official Playground):
+    ///   1. Try `load*()` first — succeeds instantly if already cached on disk.
+    ///   2. If load fails, call `downloadModel()` (returns AsyncStream of progress).
+    ///   3. After download completes, call `load*()` again.
+    ///
+    /// `downloadModel()` is the **universal** download method for all model types.
+    /// The SDK knows the type from the `modality` set during `registerModel()`.
+    ///
+    /// Ref: Playground/swift-starter-app/LocalAIPlayground/Services/ModelService.swift
+    private func loadAllModels() async {
+        // 1. LLM ──────────────────────────────────────────────────────────────
+        await downloadAndLoad(
+            label: "Language Model",
+            modelId: ModelConfig.llmModelId,
+            setStatus: { self.status.llmStatus = $0 },
+            loadFn: { try await RunAnywhere.loadModel(ModelConfig.llmModelId) }
+        )
         updateOverallProgress()
-    }
 
-    /// Initialize VAD for voice activity detection.
-    private func initializeVAD() async {
+        // 2. STT (Whisper) ────────────────────────────────────────────────────
+        await downloadAndLoad(
+            label: "Speech Recognition",
+            modelId: ModelConfig.sttModelId,
+            setStatus: { self.status.sttStatus = $0 },
+            loadFn: { try await RunAnywhere.loadSTTModel(ModelConfig.sttModelId) }
+        )
+        updateOverallProgress()
+
+        // 3. TTS (Piper) ─────────────────────────────────────────────────────
+        await downloadAndLoad(
+            label: "Voice Synthesis",
+            modelId: ModelConfig.ttsVoiceId,
+            setStatus: { self.status.ttsStatus = $0 },
+            loadFn: { try await RunAnywhere.loadTTSVoice(ModelConfig.ttsVoiceId) },
+            fallbackOnFailure: true  // Falls back to AVSpeechSynthesizer
+        )
+        updateOverallProgress()
+
+        // 4. VAD (energy-based — no download needed) ─────────────────────────
         status.vadStatus = .loading
         statusMessage = "Initializing voice detection…"
-
         do {
-            let vadConfig = VADConfiguration(
-                energyThreshold: 0.5,
-                sampleRate: 16000,
-                frameLength: 0.032
+            try await RunAnywhere.initializeVAD(
+                VADConfiguration(
+                    energyThreshold: 0.5,
+                    sampleRate: 16000,
+                    frameLength: 0.032
+                )
             )
-            try await RunAnywhere.initializeVAD(vadConfig)
             status.vadStatus = .ready
             print("✅ VAD initialized")
         } catch {
             status.vadStatus = .failed
             print("❌ VAD initialization failed: \(error.localizedDescription)")
         }
-
         updateOverallProgress()
+
+        // Final status
+        if status.isReady {
+            statusMessage = "All models ready — offline ready"
+        }
+    }
+
+    /// Generic helper: try to load a model from cache, download if needed, then load.
+    ///
+    /// - Parameters:
+    ///   - label: Human-readable name for status messages (e.g. "Language Model").
+    ///   - modelId: The registered model ID.
+    ///   - setStatus: Closure to update the corresponding `ModelReadiness` field.
+    ///   - loadFn: The type-specific load call (loadModel / loadSTTModel / loadTTSVoice).
+    ///   - fallbackOnFailure: If `true`, mark as `.ready` on failure (TTS has system fallback).
+    private func downloadAndLoad(
+        label: String,
+        modelId: String,
+        setStatus: @escaping (ModelReadiness) -> Void,
+        loadFn: @escaping () async throws -> Void,
+        fallbackOnFailure: Bool = false
+    ) async {
+        // Step 1: Try to load from cache (instant if already downloaded)
+        setStatus(.loading)
+        statusMessage = "Loading \(label.lowercased())…"
+        do {
+            try await loadFn()
+            setStatus(.ready)
+            print("✅ \(label) loaded from cache: \(modelId)")
+            return
+        } catch {
+            print("ℹ️ \(label) not cached, will download: \(error.localizedDescription)")
+        }
+
+        // Step 2: Download from CDN
+        setStatus(.downloading)
+        statusMessage = "Downloading \(label.lowercased())…"
+        do {
+            let progressStream = try await RunAnywhere.downloadModel(modelId)
+            for await progress in progressStream {
+                // Update the overall download bar with per-model progress
+                // (Each model contributes ¼ of overall progress)
+                statusMessage = "Downloading \(label.lowercased())… \(Int(progress.overallProgress * 100))%"
+                if progress.stage == .completed {
+                    break
+                }
+            }
+            setStatus(.downloaded)
+            print("✅ \(label) downloaded: \(modelId)")
+        } catch {
+            let msg = "\(label) download failed: \(error.localizedDescription)"
+            if fallbackOnFailure {
+                setStatus(.ready)
+                print("⚠️ \(msg) — using system fallback")
+                return
+            }
+            setStatus(.failed)
+            errorMessage = msg
+            print("❌ \(msg)")
+            return
+        }
+
+        // Step 3: Load the freshly-downloaded model into memory
+        setStatus(.loading)
+        statusMessage = "Loading \(label.lowercased())…"
+        do {
+            try await loadFn()
+            setStatus(.ready)
+            print("✅ \(label) loaded: \(modelId)")
+        } catch {
+            let msg = "\(label) load failed: \(error.localizedDescription)"
+            if fallbackOnFailure {
+                setStatus(.ready)
+                print("⚠️ \(msg) — using system fallback")
+                return
+            }
+            setStatus(.failed)
+            errorMessage = msg
+            print("❌ \(msg)")
+        }
     }
 
     // MARK: - Voice Agent Pipeline
 
     /// Initialize the Voice Agent Pipeline with all loaded models.
+    /// Ref: https://docs.runanywhere.ai/swift/voice-agent
     private func initializeVoiceAgent() async {
         guard status.sttStatus == .ready,
               status.llmStatus == .ready,
@@ -267,6 +413,8 @@ class RunAnywhereManager: ObservableObject {
         }
 
         do {
+            // Models are already loaded above, so use the loaded-models shortcut
+            // if available, otherwise pass config explicitly.
             let config = VoiceAgentConfiguration(
                 sttModelId: ModelConfig.sttModelId,
                 llmModelId: ModelConfig.llmModelId,
@@ -277,6 +425,7 @@ class RunAnywhereManager: ObservableObject {
             )
             try await RunAnywhere.initializeVoiceAgent(config)
             voiceAgentReady = true
+            statusMessage = "Voice agent ready"
             print("✅ Voice Agent Pipeline initialized")
         } catch {
             // If voice agent init fails, components are still usable individually
@@ -300,12 +449,27 @@ class RunAnywhereManager: ObservableObject {
     /// Generate an LLM response from text.
     func generateResponse(_ prompt: String, systemPrompt: String? = nil) async throws -> String {
         if let sys = systemPrompt {
-            // Use chat with system prompt via generate
+            // Build the full prompt string
+            var fullPrompt = "\(sys)\n\nUser: \(prompt)\n\nAssistant:"
+
+            // Guard against exceeding LLM batch size (default 512 tokens).
+            // Rough estimate: ~4 characters per token. Stay under ~480 tokens
+            // to leave room for generation. That's ~1920 chars.
+            let maxPromptChars = 1900
+            if fullPrompt.count > maxPromptChars {
+                // Truncate the system prompt portion (keep the user query intact)
+                let userSuffix = "\n\nUser: \(prompt)\n\nAssistant:"
+                let maxSysChars = maxPromptChars - userSuffix.count
+                let truncatedSys = String(sys.prefix(max(200, maxSysChars)))
+                fullPrompt = "\(truncatedSys)\n\nUser: \(prompt)\n\nAssistant:"
+                print("⚠️ [LLM] Prompt truncated from \(sys.count + userSuffix.count) to \(fullPrompt.count) chars to fit batch size")
+            }
+
             let result = try await RunAnywhere.generate(
-                "\(sys)\n\nUser: \(prompt)\n\nAssistant:",
+                fullPrompt,
                 options: LLMGenerationOptions(
-                    maxTokens: 300,
-                    temperature: 0.3  // Low temperature for factual emergency guidance
+                    maxTokens: 200,       // Reduced from 300 — shorter responses are faster + safer
+                    temperature: 0.3      // Low temperature for factual emergency guidance
                 )
             )
             return result.text
@@ -380,8 +544,8 @@ class RunAnywhereManager: ObservableObject {
     }
 
     /// Pre-warm models with a dummy inference to reduce first-real-request latency.
-    /// Call after models are loaded and before the first user interaction.
-    func warmup() async {
+    /// Called automatically at end of first-time setup.
+    private func warmup() async {
         guard status.isReady else { return }
 
         statusMessage = "Warming up AI models…"
@@ -408,12 +572,24 @@ class RunAnywhereManager: ObservableObject {
     }
 
     /// Force re-download models (e.g. after SDK update).
+    /// Resets the setup flag so the first-time setup screen shows again.
     func redownloadModels() async {
+        // Unload existing models first
+        try? await RunAnywhere.unloadModel()
+        try? await RunAnywhere.unloadSTTModel()
+        try? await RunAnywhere.unloadTTSVoice()
+        await RunAnywhere.cleanupVoiceAgent()
+
         status = RunAnywhereStatus()
         downloadProgress = 0
         voiceAgentReady = false
-        await downloadAndLoadAllModels()
-        await initializeVoiceAgent()
+
+        // Reset the setup flag
+        UserDefaults.standard.set(false, forKey: Self.setupCompleteKey)
+        setupComplete = false
+
+        // Re-run setup
+        await performFirstTimeSetup()
     }
 
     // MARK: - Helpers

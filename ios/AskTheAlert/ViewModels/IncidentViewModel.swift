@@ -180,22 +180,17 @@ class IncidentViewModel: ObservableObject {
     // MARK: - Voice Session
 
     private func startVoiceSession() async {
-        phase = .preparingModels
-
-        // Ensure SDK is initialized
-        if !runAnywhereManager.status.isReady {
-            await runAnywhereManager.initialize()
-        }
-
-        // Wait until models are ready
-        while !runAnywhereManager.status.isReady {
-            try? await Task.sleep(nanoseconds: 250_000_000) // 250ms
-            modelProgress = runAnywhereManager.downloadProgress
-            modelStatusText = runAnywhereManager.statusMessage
-        }
-
-        modelsReady = true
+        // Models are guaranteed to be loaded and ready:
+        // - Downloaded once during first-launch SetupView
+        // - Loaded from cache on every subsequent launch in AskTheAlertApp.task
+        // If for some unexpected reason they aren't ready, show error but don't block.
+        modelsReady = runAnywhereManager.status.isReady
         phase = .starting
+
+        if !modelsReady {
+            errorMessage = "AI models not ready. Please restart the app."
+            print("⚠️ Models not ready when IncidentView opened — this should not happen.")
+        }
 
         // Create and start voice agent
         let agent = VoiceAgentService()

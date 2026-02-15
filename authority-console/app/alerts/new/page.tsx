@@ -1,74 +1,61 @@
 /**
  * Alert Composer — Create and send a new alert push notification.
  *
- * Features:
- * - Incident code, title, body, severity, region
- * - Targeting: all devices, by device label, or by region
+ * Simplified for hackathon:
+ * - Auto-generates a unique incident code
+ * - Always sends to ALL eligible devices
+ * - Simple form: title, severity, body, region
  * - Preview before sending
- * - Sends via backend POST /alerts
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { sendAlert, listIncidents, type IncidentSummary } from "../../../lib/api";
+import { useState } from "react";
+import { sendAlert } from "../../../lib/api";
 import type { AlertSeverity } from "@askthealert/shared";
 import Link from "next/link";
 
-type TargetingMode = "all" | "label" | "region";
+/** Generate a unique incident code like TOR-2026-0214-003 */
+function generateIncidentCode(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const seq = String(Math.floor(Math.random() * 900) + 100); // 3-digit random
+  return `TOR-${year}-${month}${day}-${seq}`;
+}
 
 export default function NewAlertPage() {
-  const [incidentCode, setIncidentCode] = useState("");
-  const [title, setTitle] = useState("");
+  const [incidentCode] = useState(generateIncidentCode);
+  const [title, setTitle] = useState("Tornado Warning \u2013 Waterloo Region");
   const [body, setBody] = useState("");
-  const [severity, setSeverity] = useState<AlertSeverity>("warning");
+  const [severity, setSeverity] = useState<AlertSeverity>("critical");
   const [region, setRegion] = useState("Waterloo Region");
-  const [targetingMode, setTargetingMode] = useState<TargetingMode>("all");
-  const [targetLabel, setTargetLabel] = useState("");
-  const [targetRegion, setTargetRegion] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [existingIncidents, setExistingIncidents] = useState<IncidentSummary[]>([]);
-
-  // Fetch existing incidents for code suggestions
-  useEffect(() => {
-    listIncidents(10)
-      .then((data) => setExistingIncidents(data.incidents))
-      .catch(() => {});
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (showPreview) {
-      // Actually send
       setSending(true);
       setResult(null);
       setError(null);
 
       try {
-        let targeting: "all" | string[] | { label: string };
-        if (targetingMode === "label" && targetLabel) {
-          targeting = { label: targetLabel };
-        } else if (targetingMode === "region" && targetRegion) {
-          // Region targeting uses label matching on device label
-          targeting = { label: targetRegion };
-        } else {
-          targeting = "all";
-        }
-
         const resp = await sendAlert({
           incidentCode,
           title,
           severity,
           body,
           region,
-          targeting,
+          targeting: "all",
         });
+
         setResult(
-          `Alert sent to ${resp.sent}/${resp.total} device(s). ${resp.pruned} pruned.`
+          `Alert sent to ${resp.sent} of ${resp.total} device(s).${resp.pruned > 0 ? ` ${resp.pruned} invalid token(s) pruned.` : ""}`
         );
         setShowPreview(false);
       } catch (err: unknown) {
@@ -117,7 +104,7 @@ export default function NewAlertPage() {
         <div>
           <h1 className="text-2xl font-bold">Send Alert</h1>
           <p className="text-gray-500 mt-1">
-            Create a new incident and push a notification to citizens.
+            Create a new incident and push a notification to all citizens.
           </p>
         </div>
       </div>
@@ -132,17 +119,12 @@ export default function NewAlertPage() {
             >
               View Incident Dashboard &rarr;
             </Link>
-            <button
-              onClick={() => {
-                setResult(null);
-                setIncidentCode("");
-                setTitle("");
-                setBody("");
-              }}
+            <Link
+              href="/alerts/new"
               className="text-sm text-gray-600 hover:underline"
             >
-              Send Another
-            </button>
+              Send Another Alert
+            </Link>
           </div>
         </div>
       )}
@@ -154,9 +136,6 @@ export default function NewAlertPage() {
           severity={severity}
           body={body}
           region={region}
-          targetingMode={targetingMode}
-          targetLabel={targetLabel}
-          targetRegion={targetRegion}
           sending={sending}
           error={error}
           onConfirm={handleSubmit}
@@ -166,44 +145,13 @@ export default function NewAlertPage() {
 
       {!showPreview && !result && (
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Existing incidents hint */}
-          {existingIncidents.length > 0 && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <p className="text-xs text-gray-500 mb-1">Existing incidents:</p>
-              <div className="flex flex-wrap gap-2">
-                {existingIncidents.map((inc) => (
-                  <button
-                    key={inc.incidentCode}
-                    type="button"
-                    onClick={() => {
-                      setIncidentCode(inc.incidentCode);
-                      setTitle(inc.title);
-                      setRegion(inc.region);
-                      setSeverity(inc.severity as AlertSeverity);
-                    }}
-                    className="text-xs bg-white border border-gray-200 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
-                  >
-                    {inc.incidentCode}
-                  </button>
-                ))}
-              </div>
+          {/* Auto-generated incident code (read-only) */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500">Incident Code (auto-generated)</p>
+              <p className="font-mono text-sm font-bold text-gray-800">{incidentCode}</p>
             </div>
-          )}
-
-          {/* Incident Code */}
-          <Field label="Incident Code" required>
-            <input
-              type="text"
-              value={incidentCode}
-              onChange={(e) => setIncidentCode(e.target.value)}
-              placeholder="TOR-2026-0214-001"
-              className="input"
-              required
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Unique identifier for this incident. Use existing code to add to an active incident.
-            </p>
-          </Field>
+          </div>
 
           {/* Title */}
           <Field label="Title" required>
@@ -211,7 +159,7 @@ export default function NewAlertPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Tornado Warning – Waterloo Region"
+              placeholder="Tornado Warning \u2013 Waterloo Region"
               className="input"
               required
             />
@@ -279,61 +227,10 @@ export default function NewAlertPage() {
             />
           </Field>
 
-          {/* Targeting */}
-          <Field label="Targeting">
-            <div className="space-y-3">
-              <div className="flex gap-4">
-                {(
-                  [
-                    { value: "all", label: "All Devices", desc: "Send to all registered devices" },
-                    { value: "label", label: "By Label", desc: "Target specific device(s) by label" },
-                    { value: "region", label: "By Region", desc: "Target devices in a specific region" },
-                  ] as const
-                ).map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`flex-1 flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      targetingMode === opt.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="targeting"
-                      value={opt.value}
-                      checked={targetingMode === opt.value}
-                      onChange={() => setTargetingMode(opt.value)}
-                      className="accent-blue-600"
-                    />
-                    <div>
-                      <span className="text-sm font-medium">{opt.label}</span>
-                      <p className="text-xs text-gray-500">{opt.desc}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-
-              {targetingMode === "label" && (
-                <input
-                  type="text"
-                  value={targetLabel}
-                  onChange={(e) => setTargetLabel(e.target.value)}
-                  placeholder="e.g. Karthik's iPhone"
-                  className="input"
-                />
-              )}
-              {targetingMode === "region" && (
-                <input
-                  type="text"
-                  value={targetRegion}
-                  onChange={(e) => setTargetRegion(e.target.value)}
-                  placeholder="e.g. Waterloo Region"
-                  className="input"
-                />
-              )}
-            </div>
-          </Field>
+          {/* Info: sends to all devices */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+            This alert will be sent as a push notification to <strong>all eligible devices</strong>.
+          </div>
 
           {/* Submit */}
           <div className="flex gap-3 pt-2">
@@ -370,9 +267,6 @@ function AlertPreview({
   severity,
   body,
   region,
-  targetingMode,
-  targetLabel,
-  targetRegion,
   sending,
   error,
   onConfirm,
@@ -383,20 +277,11 @@ function AlertPreview({
   severity: AlertSeverity;
   body: string;
   region: string;
-  targetingMode: TargetingMode;
-  targetLabel: string;
-  targetRegion: string;
   sending: boolean;
   error: string | null;
   onConfirm: (e: React.FormEvent) => void;
   onBack: () => void;
 }) {
-  const targetingText =
-    targetingMode === "label" && targetLabel
-      ? `Device label: ${targetLabel}`
-      : targetingMode === "region" && targetRegion
-      ? `Region: ${targetRegion}`
-      : "All registered devices";
 
   const severityColors: Record<string, string> = {
     critical: "border-red-500 bg-red-50",
@@ -429,12 +314,12 @@ function AlertPreview({
         <p className="text-gray-700 leading-relaxed">{body}</p>
         <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
           <span>Region: {region}</span>
-          <span>Target: {targetingText}</span>
+          <span>Target: All eligible devices</span>
         </div>
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-        This will send a push notification to <strong>{targetingText.toLowerCase()}</strong>.
+        This will send a push notification to <strong>all eligible devices</strong>.
         This action cannot be undone.
       </div>
 

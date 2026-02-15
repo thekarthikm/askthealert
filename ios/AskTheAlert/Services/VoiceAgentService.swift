@@ -28,7 +28,6 @@
  */
 
 import Foundation
-import Combine
 import AVFoundation
 import Speech
 import RunAnywhere
@@ -169,14 +168,38 @@ class VoiceAgentService: ObservableObject {
 
     private let runAnywhereManager = RunAnywhereManager.shared
     private let ragService = RAGService.shared
-    private var audioEngine: AVAudioEngine?
-    private var audioRecordingURL: URL?
-    private var audioRecorder: AVAudioRecorder?
     private var isConversationActive = false
     private var currentTurnTask: Task<Void, Never>?
     private var vadListeningTask: Task<Void, Never>?
     private var speechEndDebounceTask: Task<Void, Never>?
-    private var audioLevelTimer: AnyCancellable?
+
+    // -- Audio capture (AVAudioEngine + AsyncStream, Swift 6 safe) --
+    // Uses energy-based speech detection (RMS) instead of RunAnywhere VAD.
+    // RunAnywhere VAD proved unreliable (detectSpeech always returned false).
+    // RMS-based detection is simpler, proven, and used by many voice apps.
+
+    /// AVAudioEngine for microphone capture. Created per listening session.
+    private var audioEngine: AVAudioEngine?
+
+    /// Continuation for the async audio stream.
+    /// The tap callback yields samples here; the main-actor listening task consumes them.
+    /// Using AsyncStream avoids capturing @MainActor self in the tap closure,
+    /// which would crash in Swift 6 (dispatch_assert_queue_fail).
+    private var audioStreamContinuation: AsyncStream<[Float]>.Continuation?
+
+    /// Accumulated audio samples during active speech.
+    /// Float32, 16 kHz, mono — ready for WAV conversion and STT.
+    private var speechAudioBuffer: [Float] = []
+
+    /// Whether we are currently accumulating audio (between speech-start and speech-end).
+    private var isAccumulatingSpeech = false
+
+    // -- Energy-based speech detection thresholds --
+    /// RMS level above which we consider audio to be speech.
+    /// iPhone mic at arm's length: silence ~0.001-0.005, speech ~0.03-0.15.
+    private let speechStartThreshold: Float = 0.015
+    /// Silence duration (seconds) after speech before we finalize the turn.
+    private let silenceTimeoutSeconds: TimeInterval = 1.2
 
     /// System prompt context for the LLM.
     private var systemPrompt: String = ""
@@ -342,14 +365,16 @@ class VoiceAgentService: ObservableObject {
         vadListeningTask = nil
         speechEndDebounceTask?.cancel()
         speechEndDebounceTask = nil
-        audioLevelTimer?.cancel()
-        audioLevelTimer = nil
 
-        stopRecording()
+        // Stop audio engine
+        stopAudioEngine()
+
+        // Clear audio accumulation
+        speechAudioBuffer.removeAll()
+        isAccumulatingSpeech = false
 
         Task {
             await runAnywhereManager.stopSpeaking()
-            try? await runAnywhereManager.stopVAD()
         }
 
         isListening = false
@@ -359,6 +384,17 @@ class VoiceAgentService: ObservableObject {
         onStateChange?(.idle)
 
         deactivateAudioSession()
+    }
+
+    /// Tear down the AVAudioEngine (remove tap, stop, nil out).
+    private func stopAudioEngine() {
+        audioEngine?.inputNode.removeTap(onBus: 0)
+        audioEngine?.stop()
+        audioEngine = nil
+
+        // Finish the async stream so the listening task exits its `for await` loop
+        audioStreamContinuation?.finish()
+        audioStreamContinuation = nil
     }
 
     /// Update RAG context during an active session (e.g., when an authority update arrives).
@@ -492,12 +528,7 @@ class VoiceAgentService: ObservableObject {
         case .granted:
             return true
         case .undetermined:
-            do {
-                return try await AVAudioApplication.requestRecordPermission()
-            } catch {
-                print("⚠️ Microphone permission request failed: \(error)")
-                return false
-            }
+            return await AVAudioApplication.requestRecordPermission()
         case .denied:
             return false
         @unknown default:
@@ -513,13 +544,16 @@ class VoiceAgentService: ObservableObject {
         let session = AVAudioSession.sharedInstance()
 
         // .playAndRecord: allows simultaneous input + output
-        // .defaultToSpeaker: plays audio through speaker even when ringer is silent
-        // .allowBluetooth: supports BT headsets
-        // .duckOthers: reduces volume of other audio (e.g., music) during our session
+        // .defaultToSpeaker: plays audio through speaker (not earpiece)
+        // .allowBluetooth*: supports BT headsets
+        // mode: .default (NOT .voiceChat!)
+        //   .voiceChat applies aggressive AGC + noise suppression that reduces
+        //   mic sensitivity by ~10x (RMS 0.02 instead of 0.15 for normal speech).
+        //   .default preserves raw mic levels, which our energy-based detection needs.
         try session.setCategory(
             .playAndRecord,
-            mode: .voiceChat,
-            options: [.defaultToSpeaker, .allowBluetoothHFP, .allowBluetoothA2DP, .duckOthers]
+            mode: .default,
+            options: [.defaultToSpeaker, .allowBluetoothHFP, .allowBluetoothA2DP]
         )
         try session.setActive(true, options: .notifyOthersOnDeactivation)
 
@@ -571,12 +605,15 @@ class VoiceAgentService: ObservableObject {
         case .began:
             // Pause the voice agent during interruption
             print("🔇 Audio session interrupted (e.g., phone call)")
-            stopRecording()
+            stopAudioEngine()
+            speechAudioBuffer.removeAll()
+            isAccumulatingSpeech = false
             Task {
                 await runAnywhereManager.stopSpeaking()
             }
             isListening = false
             isSpeaking = false
+            audioLevel = 0
             state = .idle
         case .ended:
             // Resume if the interruption ended and we should resume
@@ -648,98 +685,182 @@ class VoiceAgentService: ObservableObject {
         }
     }
 
-    /// Start recording audio and use VAD to detect speech boundaries.
+    /// Start listening for speech using AVAudioEngine + energy-based detection.
+    ///
+    /// **Why energy-based instead of RunAnywhere VAD?**
+    /// RunAnywhere's `detectSpeech(in:)` consistently returned `false` for all
+    /// audio despite correct init/start/threshold tuning. Energy-based (RMS)
+    /// detection is simpler, proven, and used by many production voice apps.
+    /// We still use RunAnywhere for STT, LLM, and TTS — just not VAD.
+    ///
+    /// **Swift 6 concurrency safety**:
+    /// The `installTap` closure runs on a realtime audio thread, NOT the main
+    /// actor. We use `AsyncStream` + a `nonisolated` static tap handler to
+    /// avoid `dispatch_assert_queue_fail` crashes in Swift 6.
+    ///
+    /// **Speech detection algorithm**:
+    /// 1. Compute RMS of each audio chunk (~85ms at 4096 samples / 48kHz).
+    /// 2. If RMS > `speechStartThreshold` (0.015) → speech started, accumulate.
+    /// 3. If RMS drops below threshold for `silenceTimeoutSeconds` (1.2s) → speech ended.
+    /// 4. Convert accumulated samples to WAV → STT → LLM → TTS.
     private func startRecordingWithVAD() async throws {
-        // Prepare audio recording
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("voice_\(UUID().uuidString).wav")
-        audioRecordingURL = tempURL
+        // Clear previous state
+        speechAudioBuffer.removeAll(keepingCapacity: true)
+        isAccumulatingSpeech = false
 
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatLinearPCM),
-            AVSampleRateKey: 16000,
-            AVNumberOfChannelsKey: 1,
-            AVLinearPCMBitDepthKey: 16,
-            AVLinearPCMIsFloatKey: false,
-        ]
+        // ── CRITICAL: Force-reset the audio session before recording ─────────
+        // After RunAnywhere TTS plays audio through its AudioPlaybackManager,
+        // the audio route may leave the mic input disconnected. iOS requires
+        // an explicit deactivate → reconfigure → reactivate cycle to properly
+        // re-route the mic for recording. Without this, AVAudioEngine's input
+        // node returns all-zero samples (the exact symptom we observed).
+        // Ref: Apple Developer Forums thread/771048, thread/111249
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("⚠️ [Audio] Session deactivation note: \(error.localizedDescription)")
+            // Non-fatal: deactivation can fail if other audio is active
+        }
 
-        audioRecorder = try AVAudioRecorder(url: tempURL, settings: settings)
-        audioRecorder?.isMeteringEnabled = true
-        audioRecorder?.record()
+        // Brief pause for iOS audio subsystem to settle the route change
+        try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
 
-        // Start audio level monitoring for waveform
-        startAudioLevelMonitoring()
+        // Re-set category + reactivate — forces iOS to reconnect the mic input
+        // Use .default mode (NOT .voiceChat) for full mic sensitivity
+        try session.setCategory(
+            .playAndRecord,
+            mode: .default,
+            options: [.defaultToSpeaker, .allowBluetoothHFP, .allowBluetoothA2DP]
+        )
+        try session.setActive(true, options: .notifyOthersOnDeactivation)
+        print("🎙️ [Audio] Session force-reset: deactivated → .playAndRecord → reactivated")
 
-        // Start VAD to detect when user starts/stops speaking
-        try await runAnywhereManager.startVAD(
-            onSpeechStart: { [weak self] in
-                Task { @MainActor in
-                    guard let self = self else { return }
-                    self.speechEndDebounceTask?.cancel()
-                    if self.isSpeaking {
-                        // INTERRUPTION: user started speaking while agent is speaking
-                        // Cancel TTS immediately
-                        await self.runAnywhereManager.stopSpeaking()
-                        self.isSpeaking = false
-                        self.state = .listening
-                        self.onStateChange?(.listening)
-                        print("🔇 Interruption: cancelled TTS because user started speaking")
-                    }
-                }
-            },
-            onSpeechEnd: { [weak self] in
-                Task { @MainActor in
-                    guard let self = self, self.isConversationActive else { return }
+        // ── 1. Set up AVAudioEngine AFTER session is properly configured ─────
+        let engine = AVAudioEngine()
+        self.audioEngine = engine
 
-                    // Debounce: wait 350ms before treating as end of speech
-                    // Reduced from 500ms for snappier response feel
-                    // This still handles brief pauses mid-sentence
-                    self.speechEndDebounceTask?.cancel()
-                    self.speechEndDebounceTask = Task { @MainActor in
-                        try? await Task.sleep(nanoseconds: 350_000_000) // 350ms debounce
-                        guard !Task.isCancelled else { return }
-                        await self.processSpeechTurn()
-                    }
-                }
-            },
-            onAudioBuffer: { [weak self] samples in
-                Task { @MainActor in
-                    // Calculate RMS for audio level visualization
-                    let rms = Self.calculateRMS(samples)
-                    self?.audioLevel = rms
-                }
-            }
+        let inputNode = engine.inputNode
+        let nativeFormat = inputNode.outputFormat(forBus: 0)
+        let nativeRate = nativeFormat.sampleRate
+
+        print("🎙️ [Audio] Mic native format: \(nativeRate) Hz, \(nativeFormat.channelCount) ch")
+
+        // ── 2. Create AsyncStream bridge (tap → main actor) ─────────────────
+        let (audioStream, continuation) = AsyncStream<[Float]>.makeStream()
+        self.audioStreamContinuation = continuation
+
+        // ── 3. Install tap — built via nonisolated static to avoid @MainActor ─
+        let tapHandler = Self.makeTapHandler(
+            continuation: continuation,
+            nativeRate: nativeRate
+        )
+        inputNode.installTap(
+            onBus: 0,
+            bufferSize: 4096,
+            format: nativeFormat,
+            block: tapHandler
         )
 
+        // ── 4. Start engine ──────────────────────────────────────────────────
+        engine.prepare()
+        try engine.start()
+        print("🎙️ [Audio] Engine started, tap installed")
+
+        // ── 5. Process audio stream with energy-based speech detection ───────
+        let threshold = speechStartThreshold
+        let silenceTimeout = silenceTimeoutSeconds
+        var chunkCount = 0
+        var lastSpeechChunkTime: Date?
+
+        vadListeningTask = Task { [weak self] in
+            for await samples in audioStream {
+                guard let self = self, self.isConversationActive else { break }
+
+                chunkCount += 1
+
+                // Compute RMS energy for this chunk
+                let rms = Self.calculateRMS(samples)
+                self.audioLevel = rms
+
+                let isSpeech = rms > threshold
+
+                // Debug logging: first 5 chunks + every 50th + every speech detection
+                if chunkCount <= 5 || chunkCount % 50 == 0 || (isSpeech && !self.isAccumulatingSpeech) {
+                    print("🎙️ [Audio] #\(chunkCount) | \(samples.count) samples | RMS=\(String(format: "%.4f", rms)) | speech=\(isSpeech)")
+                }
+
+                if isSpeech {
+                    lastSpeechChunkTime = Date()
+
+                    if !self.isAccumulatingSpeech {
+                        // ── Speech just started ──
+                        self.isAccumulatingSpeech = true
+                        self.speechAudioBuffer.removeAll(keepingCapacity: true)
+                        print("🗣️ Speech started (RMS=\(String(format: "%.4f", rms)))")
+
+                        // If agent is currently speaking, interrupt TTS
+                        if self.isSpeaking {
+                            Task {
+                                await self.runAnywhereManager.stopSpeaking()
+                            }
+                            self.isSpeaking = false
+                            self.state = .listening
+                            self.onStateChange?(.listening)
+                            print("🔇 Interrupted TTS — user started speaking")
+                        }
+                    }
+
+                    self.speechAudioBuffer.append(contentsOf: samples)
+
+                } else if self.isAccumulatingSpeech {
+                    // ── Silence after speech — keep accumulating (trailing buffer) ──
+                    self.speechAudioBuffer.append(contentsOf: samples)
+
+                    // Check if silence has lasted long enough to finalize turn
+                    if let lastSpeech = lastSpeechChunkTime,
+                       Date().timeIntervalSince(lastSpeech) >= silenceTimeout {
+                        self.isAccumulatingSpeech = false
+                        lastSpeechChunkTime = nil
+                        print("🗣️ Speech ended (after \(String(format: "%.1f", silenceTimeout))s silence)")
+                        await self.processSpeechTurn()
+                        break  // Exit stream loop; processSpeechTurn restarts via startListeningLoop
+                    }
+                }
+            }
+            print("🎙️ [Audio] Stream processing ended after \(chunkCount) chunks")
+        }
+
         isListening = true
+        print("🎙️ [Audio] Listening for speech… (energy threshold=\(threshold), silence timeout=\(silenceTimeout)s)")
     }
 
-    /// Process a complete speech turn: stop recording → STT → LLM → TTS → resume listening.
+    /// Process a complete speech turn: stop engine → build WAV → STT → LLM → TTS → restart listening.
     private func processSpeechTurn() async {
         guard isConversationActive else { return }
 
         isListening = false
-        stopAudioLevelMonitoring()
+        audioLevel = 0
 
-        // Stop recording and get audio data
-        audioRecorder?.stop()
-        try? await runAnywhereManager.stopVAD()
+        // Stop audio engine (mic off while processing this turn)
+        stopAudioEngine()
 
-        guard let recordingURL = audioRecordingURL,
-              let audioData = try? Data(contentsOf: recordingURL) else {
-            // No audio captured — resume listening
+        // Grab the accumulated audio and clear the buffer
+        let capturedSamples = speechAudioBuffer
+        speechAudioBuffer.removeAll(keepingCapacity: true)
+        isAccumulatingSpeech = false
+
+        // Minimum audio check: ~100ms of audio at 16 kHz = 1600 samples
+        guard capturedSamples.count > 1600 else {
+            print("ℹ️ Too short audio (\(capturedSamples.count) samples), resuming listening")
             await startListeningLoop()
             return
         }
 
-        // Clean up temp file
-        try? FileManager.default.removeItem(at: recordingURL)
+        // Convert accumulated Float32 samples to 16-bit PCM WAV Data
+        let audioData = Self.createWAVData(from: capturedSamples)
 
-        // Minimum audio size check (avoid processing silence/noise)
-        guard audioData.count > 3200 else { // ~100ms of audio at 16kHz 16-bit
-            await startListeningLoop()
-            return
-        }
+        print("🎤 Captured \(capturedSamples.count) samples (\(String(format: "%.1f", Double(capturedSamples.count) / 16000.0))s), WAV size: \(audioData.count) bytes")
 
         // === STT Phase (with timeout protection) ===
         state = .transcribing
@@ -905,7 +1026,7 @@ class VoiceAgentService: ObservableObject {
 
     /// Handle voice pipeline failures with graceful fallback.
     private func handleVoiceFailover(_ error: VoiceAgentError) {
-        print("⚠️ Voice failover: \(error.localizedDescription ?? "Unknown")")
+        print("⚠️ Voice failover: \(error.localizedDescription)")
 
         let fallbackMessage = error.fallbackMessage
         if !fallbackMessage.isEmpty {
@@ -934,47 +1055,101 @@ class VoiceAgentService: ObservableObject {
 
     private func handleError(_ error: VoiceAgentError) {
         errorMessage = error.localizedDescription
-        state = .error(error.localizedDescription ?? "Unknown error")
+        state = .error(error.localizedDescription)
         onError?(error)
         onStateChange?(state)
     }
 
-    // MARK: - Recording Helpers
+    // MARK: - Audio Utilities
 
-    private func stopRecording() {
-        audioRecorder?.stop()
-        audioRecorder = nil
-        stopAudioLevelMonitoring()
-    }
+    /// Build the audio tap handler outside actor isolation.
+    ///
+    /// Returning the closure from a `nonisolated` static prevents Swift 6
+    /// from inferring `@MainActor` on the closure (which would crash on
+    /// the realtime audio thread with `dispatch_assert_queue_fail`).
+    nonisolated private static func makeTapHandler(
+        continuation: AsyncStream<[Float]>.Continuation,
+        nativeRate: Double
+    ) -> AVAudioNodeTapBlock {
+        return { buffer, _ in
+            guard let channelData = buffer.floatChannelData?[0] else { return }
+            let frameCount = Int(buffer.frameLength)
+            let rawSamples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
 
-    private func startAudioLevelMonitoring() {
-        audioLevelTimer = Timer.publish(every: 0.05, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                guard let self = self, let recorder = self.audioRecorder, recorder.isRecording else {
-                    return
-                }
-                recorder.updateMeters()
-                // Convert dB to 0-1 range
-                let dB = recorder.averagePower(forChannel: 0)
-                let normalised = max(0, min(1, (dB + 60) / 60)) // -60dB to 0dB → 0 to 1
-                self.audioLevel = normalised
+            // Downsample to 16 kHz mono (e.g. 48000 / 16000 = 3)
+            let samples: [Float]
+            let ratio = nativeRate / 16000.0
+            if ratio > 1.01 {
+                let step = Int(ratio.rounded())
+                samples = stride(from: 0, to: rawSamples.count, by: step).map { rawSamples[$0] }
+            } else {
+                samples = rawSamples
             }
-    }
 
-    private func stopAudioLevelMonitoring() {
-        audioLevelTimer?.cancel()
-        audioLevelTimer = nil
-        audioLevel = 0
+            continuation.yield(samples)
+        }
     }
-
-    // MARK: - Utility
 
     /// Calculate RMS of audio samples for level visualization.
-    private static func calculateRMS(_ samples: [Float]) -> Float {
+    nonisolated private static func calculateRMS(_ samples: [Float]) -> Float {
         guard !samples.isEmpty else { return 0 }
         let sumOfSquares = samples.reduce(0) { $0 + $1 * $1 }
         return sqrt(sumOfSquares / Float(samples.count))
+    }
+
+    /// Convert Float32 audio samples to a 16-bit PCM WAV file Data.
+    ///
+    /// This is needed because RunAnywhere's `transcribe()` and `processVoiceTurn()`
+    /// expect WAV file data. The VAD's onAudioBuffer provides raw Float32 samples,
+    /// so we wrap them in a proper WAV container.
+    ///
+    /// - Parameters:
+    ///   - samples: Float32 audio samples (range -1.0 to 1.0), 16 kHz mono.
+    ///   - sampleRate: The sample rate (default 16000 Hz).
+    /// - Returns: Complete WAV file as `Data`.
+    private static func createWAVData(from samples: [Float], sampleRate: Int = 16000) -> Data {
+        let numChannels: UInt16 = 1
+        let bitsPerSample: UInt16 = 16
+        let byteRate = UInt32(sampleRate) * UInt32(numChannels) * UInt32(bitsPerSample) / 8
+        let blockAlign = numChannels * bitsPerSample / 8
+        let dataSize = UInt32(samples.count) * UInt32(blockAlign)
+        let chunkSize: UInt32 = 36 + dataSize
+
+        var data = Data()
+        data.reserveCapacity(44 + Int(dataSize))
+
+        // RIFF header
+        data.append(contentsOf: [0x52, 0x49, 0x46, 0x46]) // "RIFF"
+        appendLittleEndian(&data, chunkSize)
+        data.append(contentsOf: [0x57, 0x41, 0x56, 0x45]) // "WAVE"
+
+        // fmt sub-chunk
+        data.append(contentsOf: [0x66, 0x6D, 0x74, 0x20]) // "fmt "
+        appendLittleEndian(&data, UInt32(16))               // Sub-chunk size
+        appendLittleEndian(&data, UInt16(1))                // PCM format
+        appendLittleEndian(&data, numChannels)
+        appendLittleEndian(&data, UInt32(sampleRate))
+        appendLittleEndian(&data, byteRate)
+        appendLittleEndian(&data, blockAlign)
+        appendLittleEndian(&data, bitsPerSample)
+
+        // data sub-chunk
+        data.append(contentsOf: [0x64, 0x61, 0x74, 0x61]) // "data"
+        appendLittleEndian(&data, dataSize)
+
+        // Audio samples: Float32 → Int16
+        for sample in samples {
+            let clamped = max(-1.0, min(1.0, sample))
+            let int16Value = Int16(clamped * Float(Int16.max))
+            appendLittleEndian(&data, int16Value)
+        }
+
+        return data
+    }
+
+    /// Append a value in little-endian byte order to a Data buffer.
+    private static func appendLittleEndian<T: FixedWidthInteger>(_ data: inout Data, _ value: T) {
+        withUnsafeBytes(of: value.littleEndian) { data.append(contentsOf: $0) }
     }
 }
 

@@ -9,9 +9,19 @@
 import SwiftUI
 import AVFoundation
 
+/// Microphone permission states tracked locally.
+/// We use our own enum to avoid the lowercase nested type
+/// `AVAudioApplication.recordPermission` which causes Swift type-inference
+/// issues when used as a stored property type annotation.
+private enum MicPermissionState {
+    case undetermined
+    case granted
+    case denied
+}
+
 struct MicPermissionView: View {
     @Binding var isGranted: Bool
-    @State private var permissionStatus: AVAudioApplication.RecordPermission = .undetermined
+    @State private var permissionState: MicPermissionState = .undetermined
 
     var body: some View {
         VStack(spacing: 24) {
@@ -61,7 +71,7 @@ struct MicPermissionView: View {
 
             Spacer()
 
-            if permissionStatus == .denied {
+            if permissionState == .denied {
                 Button(action: openSettings) {
                     HStack {
                         Image(systemName: "gear")
@@ -102,24 +112,32 @@ struct MicPermissionView: View {
     }
 
     private func checkPermission() {
-        permissionStatus = AVAudioApplication.shared.recordPermission
-        isGranted = permissionStatus == .granted
+        let status = AVAudioApplication.shared.recordPermission
+        switch status {
+        case .granted:
+            permissionState = .granted
+            isGranted = true
+        case .denied:
+            permissionState = .denied
+            isGranted = false
+        case .undetermined:
+            permissionState = .undetermined
+            isGranted = false
+        @unknown default:
+            permissionState = .undetermined
+            isGranted = false
+        }
     }
 
     private func requestPermission() {
         Task {
-            do {
-                let granted = try await AVAudioApplication.requestRecordPermission()
-                await MainActor.run {
-                    self.isGranted = granted
-                    if !granted {
-                        self.permissionStatus = .denied
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    self.isGranted = false
-                    self.permissionStatus = .denied
+            let granted = await AVAudioApplication.requestRecordPermission()
+            await MainActor.run {
+                self.isGranted = granted
+                if granted {
+                    self.permissionState = .granted
+                } else {
+                    self.permissionState = .denied
                 }
             }
         }

@@ -20,7 +20,9 @@ struct VoiceWaveformView: View {
     private let barCount = 40
 
     @State private var phases: [Double] = []
-    @State private var timer: Timer?
+
+    /// SwiftUI-native timer that stays on the MainActor (Swift 6 safe).
+    private let animationTimer = Timer.publish(every: 0.06, on: .main, in: .common).autoconnect()
 
     var body: some View {
         GeometryReader { geometry in
@@ -50,10 +52,9 @@ struct VoiceWaveformView: View {
         }
         .onAppear {
             phases = (0..<barCount).map { _ in Double.random(in: 0...1) }
-            startAnimation()
         }
-        .onDisappear {
-            timer?.invalidate()
+        .onReceive(animationTimer) { _ in
+            updatePhases()
         }
     }
 
@@ -93,18 +94,14 @@ struct VoiceWaveformView: View {
         }
     }
 
-    private func startAnimation() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.06, repeats: true) { _ in
-            for i in phases.indices {
-                if isSpeaking {
-                    // Slower, gentler wave for speaking
-                    phases[i] += Double.random(in: 0.03...0.08)
-                } else {
-                    // Normal wave for listening
-                    phases[i] += Double.random(in: 0.05...0.15)
-                }
-                if phases[i] > 2.0 { phases[i] = 0 }
+    private func updatePhases() {
+        for i in phases.indices {
+            if isSpeaking {
+                phases[i] += Double.random(in: 0.03...0.08)
+            } else {
+                phases[i] += Double.random(in: 0.05...0.15)
             }
+            if phases[i] > 2.0 { phases[i] = 0 }
         }
     }
 }

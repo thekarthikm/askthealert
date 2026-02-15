@@ -38,15 +38,18 @@ alertsRouter.post("/", async (req, res) => {
   const supabase = getSupabase();
   const timestamp = new Date().toISOString();
 
-  // 1. Store the alert in Supabase
-  const { error: alertError } = await supabase.from("alerts").insert({
-    incident_code: incidentCode,
-    title,
-    severity,
-    body,
-    region,
-    timestamp,
-  });
+  // 1. Store the alert in Supabase (upsert so retries after push failure don't break)
+  const { error: alertError } = await supabase.from("alerts").upsert(
+    {
+      incident_code: incidentCode,
+      title,
+      severity,
+      body,
+      region,
+      timestamp,
+    },
+    { onConflict: "incident_code" }
+  );
   if (alertError) {
     console.error("Failed to store alert:", alertError);
     res.status(500).json({ error: "Failed to store alert" });
@@ -87,7 +90,24 @@ alertsRouter.post("/", async (req, res) => {
     severity,
     type: "alert",
   };
-  const results = await sendAlertPush(tokens, payload);
+  console.log(`📤 Sending push to ${tokens.length} device(s) for incident ${incidentCode}`);
+  let results;
+  try {
+    results = await sendAlertPush(tokens, payload);
+  } catch (pushError) {
+    console.error("❌ APNs push threw an exception:", pushError);
+    res.status(500).json({ error: "Push notification delivery failed", details: String(pushError) });
+    return;
+  }
+
+  // Log every result for debugging
+  for (const r of results) {
+    if (r.success) {
+      console.log(`  ✅ Push delivered to ${r.deviceToken.slice(0, 8)}…`);
+    } else {
+      console.error(`  ❌ Push FAILED for ${r.deviceToken.slice(0, 8)}… reason: ${r.reason}`);
+    }
+  }
 
   // 4. Prune invalid tokens
   const toPrune = results.filter((r) => r.shouldPrune).map((r) => r.deviceToken);
@@ -100,5 +120,7 @@ alertsRouter.post("/", async (req, res) => {
   }
 
   const sentCount = results.filter((r) => r.success).length;
+  const failedCount = results.filter((r) => !r.success).length;
+  console.log(`📊 Push results: ${sentCount} sent, ${failedCount} failed, ${toPrune.length} pruned`);
   res.status(200).json({ sent: sentCount, total: tokens.length, pruned: toPrune.length });
 });
