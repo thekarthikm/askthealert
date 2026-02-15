@@ -25,6 +25,8 @@ const RULES: PatternRule[] = [
       "where to shelter", "shelter in place", "safe room", "basement",
       "lowest level", "windowless room", "interior room", "take shelter",
       "go to basement", "where do i go", "where should i go",
+      "where to go", "what should i do", "what do i do", "where right now",
+      "high rise", "condo", "apartment", "building", "floor",
     ],
     baseConfidence: 0.85,
   },
@@ -58,6 +60,8 @@ const RULES: PatternRule[] = [
     patterns: [
       "roads closed", "can i drive", "travel safe", "highway", "road closure",
       "driving", "commute", "traffic", "route", "bridge",
+      "should i drive", "drive home", "in my car", "car", "vehicle",
+      "on the road", "traveling", "stuck in traffic",
     ],
     baseConfidence: 0.80,
   },
@@ -86,10 +90,31 @@ const RULES: PatternRule[] = [
     baseConfidence: 0.95,
   },
   {
+    intent: "family_safety",
+    patterns: [
+      "kids", "children", "child", "baby", "toddler", "infant",
+      "family", "son", "daughter", "keep them calm", "keep calm",
+      "young kids", "little ones", "my kids", "my children",
+      "with children", "with kids", "pregnant", "elderly", "seniors",
+    ],
+    baseConfidence: 0.85,
+  },
+  {
+    intent: "shelter_guidance",
+    patterns: [
+      "mobile home", "manufactured home", "trailer", "trailer park",
+      "open windows", "opening windows", "should i open", "close windows",
+      "windows open", "window myth",
+    ],
+    baseConfidence: 0.90,
+  },
+  {
     intent: "general_clarification",
     patterns: [
       "what does", "what is a", "explain", "clarify", "mean", "what do i do",
       "i don't understand", "confused", "what's the difference",
+      "difference between", "watch and warning", "watch vs warning",
+      "what is watch", "what is warning", "how do i know",
     ],
     baseConfidence: 0.60,
   },

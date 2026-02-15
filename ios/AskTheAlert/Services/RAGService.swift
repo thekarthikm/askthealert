@@ -88,7 +88,14 @@ actor RAGService {
 
     /// Backend API base URL.
     private let baseURL: String = {
-        ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "http://localhost:3001"
+        if let configured = ProcessInfo.processInfo.environment["API_BASE_URL"], !configured.isEmpty {
+            return configured
+        }
+        #if targetEnvironment(simulator)
+        return "http://localhost:3001"
+        #else
+        return "http://HKs-MacBook-Air.local:3001"
+        #endif
     }()
 
     /// Hard timeout for online retrieval (400–800 ms per spec).
@@ -117,22 +124,27 @@ actor RAGService {
     // MARK: - BM25 Parameters
 
     /// Term-frequency saturation parameter. Higher values slow down TF saturation.
-    private let bm25K1: Float = 1.2
+    /// Increased from 1.2 to 1.5 for better sensitivity to repeated terms in queries.
+    private let bm25K1: Float = 1.5
 
     /// Document length normalisation. 0 = no normalisation, 1 = full normalisation.
     private let bm25B: Float = 0.75
 
     /// Boost factor for title matches (title is more important).
-    private let titleBoost: Float = 2.0
+    /// Increased from 2.0 to 3.0 for more aggressive title matching.
+    private let titleBoost: Float = 3.0
 
     /// Boost factor for keyword field matches.
-    private let keywordBoost: Float = 1.5
+    /// Increased from 1.5 to 2.0 for better keyword matching.
+    private let keywordBoost: Float = 2.0
 
     /// Boost factor for synonym matches (slightly lower than direct).
-    private let synonymBoost: Float = 0.7
+    /// Increased from 0.7 to 0.9 to value synonyms more.
+    private let synonymBoost: Float = 0.9
 
     /// Boost factor for hazard tag matches.
-    private let hazardTagBoost: Float = 1.3
+    /// Increased from 1.3 to 1.8 for better hazard filtering.
+    private let hazardTagBoost: Float = 1.8
 
     // MARK: - Initialization
 
@@ -215,7 +227,9 @@ actor RAGService {
             "pet": Set(["dog", "cat", "animal", "companion animal"]),
             "car": Set(["vehicle", "truck", "van", "suv", "automobile"]),
             "house": Set(["home", "residence", "dwelling"]),
-            "apartment": Set(["condo", "flat", "unit", "high-rise", "tower"]),
+            "apartment": Set(["condo", "flat", "unit", "high-rise", "high rise", "highrise", "tower", "building"]),
+            "high-rise": Set(["apartment", "condo", "high rise", "highrise", "tower", "building", "multi-story", "multi-storey"]),
+            "condo": Set(["apartment", "flat", "unit", "high-rise", "high rise", "tower", "condominium"]),
             "phone": Set(["number", "call", "dial", "telephone", "contact"]),
             "power outage": Set(["blackout", "no power", "no electricity", "lights out"]),
             "help": Set(["assistance", "support", "aid"]),
@@ -306,14 +320,21 @@ actor RAGService {
                 expandedQueryTokens: expandedQueryTokens
             )
 
-            if score > 0 {
-                scored.append((chunk, score))
-            }
+            // Accept any positive score (was already > 0, keeping same)
+            // But also track all chunks with their scores for fallback
+            scored.append((chunk, score))
         }
 
-        // Sort by score descending, take topK
-        return scored
-            .sorted { $0.score > $1.score }
+        // Sort by score descending
+        let sortedScored = scored.sorted { $0.score > $1.score }
+        
+        // If no chunks scored above 0, take top chunks anyway (better than nothing)
+        let hasPositiveScores = sortedScored.first?.score ?? 0 > 0
+        let chunksToReturn = hasPositiveScores 
+            ? sortedScored.filter { $0.score > 0 }
+            : sortedScored // Return all chunks sorted by score even if all are 0
+        
+        return chunksToReturn
             .prefix(topK)
             .map { item in
                 RAGChunk(

@@ -26,7 +26,14 @@ actor TelemetryService {
     static let shared = TelemetryService()
 
     private let baseURL: String = {
-        ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "http://localhost:3001"
+        if let configured = ProcessInfo.processInfo.environment["API_BASE_URL"], !configured.isEmpty {
+            return configured
+        }
+        #if targetEnvironment(simulator)
+        return "http://localhost:3001"
+        #else
+        return "http://HKs-MacBook-Air.local:3001"
+        #endif
     }()
 
     /// Persistent event queue key for UserDefaults.
@@ -47,6 +54,8 @@ actor TelemetryService {
     private var isUploading = false
 
     init() {
+        print("📊 Telemetry endpoint: \(baseURL)/telemetry")
+
         // Load persisted queue synchronously from UserDefaults (nonisolated-safe)
         if let data = UserDefaults.standard.data(forKey: Self.queueKey),
            let events = try? JSONDecoder().decode([TelemetryEventModel].self, from: data) {
@@ -132,6 +141,22 @@ actor TelemetryService {
                 intentLabel: intentLabel,
                 shortText: shortText,
                 actionBlocker: blocker
+            )
+        )
+    }
+    
+    /// Record an agent response for transcript tracking and debugging.
+    /// Stores full response text to enable quality analysis.
+    nonisolated func recordAgentResponse(
+        incidentCode: String,
+        responseText: String
+    ) {
+        recordEvent(
+            incidentCode: incidentCode,
+            eventType: .question,  // Reuse question type with intent "agent_response"
+            payload: TelemetryPayload(
+                intentLabel: "agent_response",
+                shortText: responseText  // Full text, not truncated
             )
         )
     }
@@ -234,6 +259,10 @@ actor TelemetryService {
         eventQueue.append(event)
         persistQueue()
         print("📊 Telemetry event queued: \(event.eventType.rawValue) [\(eventQueue.count) pending]")
+
+        // Attempt upload immediately to reduce risk of losing demo telemetry
+        // when the app is backgrounded or stopped quickly.
+        Task { await self.uploadBatch() }
     }
 
     // MARK: - Persistence (UserDefaults)
@@ -321,7 +350,11 @@ actor TelemetryService {
                 retryBackoff = 1 // Reset backoff on success
                 print("✅ Uploaded \(batch.count) telemetry events [\(eventQueue.count) remaining]")
             } else {
-                print("⚠️ Telemetry upload returned non-2xx status")
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("⚠️ Telemetry upload returned HTTP \(httpResponse.statusCode) to \(baseURL)/telemetry")
+                } else {
+                    print("⚠️ Telemetry upload returned non-HTTP response to \(baseURL)/telemetry")
+                }
                 increaseBackoff()
             }
         } catch {
@@ -330,7 +363,7 @@ actor TelemetryService {
                (error as NSError).code == NSURLErrorNetworkConnectionLost {
                 print("📡 Telemetry upload deferred (offline) [\(eventQueue.count) queued]")
             } else {
-                print("❌ Telemetry upload failed: \(error.localizedDescription)")
+                print("❌ Telemetry upload failed to \(baseURL)/telemetry: \(error.localizedDescription)")
             }
             increaseBackoff()
         }

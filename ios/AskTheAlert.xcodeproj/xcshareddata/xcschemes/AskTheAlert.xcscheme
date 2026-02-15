@@ -52,8 +52,13 @@
       </BuildableProductRunnable>
       <EnvironmentVariables>
          <EnvironmentVariable
-            key = "API_BASE_URL"
+            key = "API_BASE_URL_OLD"
             value = "http://10.0.0.53:3001"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "API_BASE_URL"
+            value = "http://HKs-MacBook-Air.local:3001"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

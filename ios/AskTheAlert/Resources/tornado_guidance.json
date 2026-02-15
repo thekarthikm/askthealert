@@ -33,7 +33,7 @@
     "hazardTags": ["tornado"],
     "regionTags": ["waterloo_region"],
     "citation": "City of Waterloo Emergency Preparedness | Environment Canada – Tornado Safety",
-    "keywords": ["shelter", "basement", "lowest level", "interior room", "safe room", "hide", "protection", "house", "home", "where to go"],
+    "keywords": ["shelter", "basement", "lowest level", "interior room", "safe room", "hide", "protection", "house", "home", "where to go", "what should i do", "what do i do", "what to do", "what now"],
     "synonyms": {
       "shelter": ["hide", "safe place", "protection", "cover", "take cover"],
       "basement": ["lower level", "underground", "cellar", "downstairs"],
@@ -255,7 +255,7 @@
     "hazardTags": ["tornado"],
     "regionTags": ["waterloo_region", "ontario"],
     "citation": "Ontario SPCA – Emergency Preparedness | Animal Emergency Task Force (AETF) | https://aetf.ca",
-    "keywords": ["pet", "dog", "cat", "animal", "horse", "livestock", "carrier", "leash", "microchip"],
+    "keywords": ["pet", "dog", "cat", "animal", "horse", "livestock", "carrier", "leash", "microchip", "take with me", "bring with me", "take my dog", "take my cat", "bring my pet"],
     "synonyms": {
       "pet": ["dog", "cat", "animal", "furry friend", "companion animal"],
       "carrier": ["crate", "kennel", "cage"]

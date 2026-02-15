@@ -233,9 +233,18 @@ class VoiceAgentService: ObservableObject {
 
     /// Whether a satisfaction prompt has been shown this session.
     private var satisfactionPrompted: Bool = false
+    
+    /// Whether we're waiting for a yes/no satisfaction response (don't process as question).
+    private var awaitingSatisfactionResponse: Bool = false
 
     /// Session start time for timing telemetry.
     private var sessionStartTime: Date?
+    
+    /// Local transcript file for debugging (using temp directory for reliability)
+    private let transcriptFileURL: URL = {
+        let temp = FileManager.default.temporaryDirectory
+        return temp.appendingPathComponent("askthealert_transcript.txt")
+    }()
 
     /// Maximum time to wait for STT, LLM, or TTS before considering it a failure.
     private let sttTimeout: TimeInterval = 10
@@ -244,23 +253,7 @@ class VoiceAgentService: ObservableObject {
 
     /// Default system prompt (no RAG context).
     private static let baseSystemPrompt = """
-    You are "Ask the Alert", an emergency information assistant. Citizens have received an \
-    emergency alert and are asking you questions. Your job:
-
-    1. Stay calm, concise, and actionable.
-    2. Base your answers on the CONTEXT provided below. If no context is available, give \
-    general safety guidance.
-    3. If someone is in immediate danger, ALWAYS advise calling 911 first.
-    4. Never claim you can contact authorities — say "I cannot contact authorities for you. \
-    Please call 911 directly."
-    5. Use official sources only. Do not speculate.
-    6. Keep responses under 3 sentences for voice clarity.
-
-    SAFETY GUARDRAILS:
-    - If asked to call 911 or emergency services: "I cannot make calls for you. Please dial 911 \
-    directly on your phone."
-    - If asked about injuries or medical emergencies: "Please call 911 immediately for medical \
-    emergencies. While waiting, [relevant first-aid guidance if available in context]."
+    Answer tornado safety questions using ONLY the INFORMATION below. Keep answers short (2 sentences).
     """
 
     // MARK: - Lifecycle
@@ -295,7 +288,7 @@ class VoiceAgentService: ObservableObject {
             cachedRAGChunks = await ragService.retrieve(
                 query: initialQuery,
                 incidentCode: alert.incidentCode,
-                topK: 5,
+                topK: 7,
                 hazardFilter: "tornado"
             )
         } else {
@@ -304,6 +297,10 @@ class VoiceAgentService: ObservableObject {
 
         // Build system prompt with alert context, RAG chunks, and updates
         buildSystemPrompt(alert: alert, ragChunks: cachedRAGChunks, updates: updates)
+        
+        // Clear transcript file for new session
+        clearTranscript()
+        print("📝 Transcript will be saved to: \(transcriptFileURL.path)")
 
         // Check microphone permission
         let micGranted = await requestMicrophonePermission()
@@ -417,33 +414,49 @@ class VoiceAgentService: ObservableObject {
     private func refreshRAGForQuery(_ query: String) async {
         guard let alert = currentAlert else { return }
 
-        // Retrieve context relevant to this specific query
-        let queryChunks = await ragService.retrieve(
-            query: query,
+        // Preprocess query for better retrieval
+        let preprocessedQuery = preprocessVoiceQuery(query)
+
+        // Retrieve chunks (hybrid: offline + online)
+        let ragChunks = await RAGService.shared.retrieve(
+            query: preprocessedQuery,
             incidentCode: currentIncidentCode,
-            topK: 5,
+            topK: 7,
             hazardFilter: "tornado"
         )
 
-        // Merge with any authority-update chunks from online
-        var mergedChunks: [RAGChunk] = []
-        var seen = Set<String>()
+        // Try offline-only if hybrid returned nothing
+        let finalChunks = ragChunks.isEmpty
+            ? await RAGService.shared.retrieveOffline(query: preprocessedQuery, topK: 7, hazardFilter: "tornado")
+            : ragChunks
 
-        // Authority updates first (from cached)
-        for chunk in cachedRAGChunks where chunk.isAuthorityUpdate {
-            if seen.insert(chunk.id).inserted {
-                mergedChunks.append(chunk)
+        // CRITICAL: If new retrieval failed completely, clear cache to trigger fallback
+        // Don't merge stale cached chunks when current query gets nothing - this prevents fallback
+        if finalChunks.isEmpty {
+            cachedRAGChunks = []
+        } else {
+            // Merge with cached chunks only if we got new results, dedupe by ID
+            var mergedChunks = finalChunks
+            let newChunkIDs = Set(finalChunks.map { $0.id })
+            let oldChunksNotInNew = cachedRAGChunks.filter { !newChunkIDs.contains($0.id) }
+            mergedChunks.append(contentsOf: oldChunksNotInNew)
+            cachedRAGChunks = Array(mergedChunks.prefix(7))
+        }
+        
+        // Log RAG retrieval success/failure for debugging
+        if cachedRAGChunks.isEmpty {
+            print("⚠️ RAG RETRIEVAL FAILED: No chunks retrieved for query '\(query)'")
+            print("   This indicates either:")
+            print("   - Query too dissimilar to corpus (BM25 score too low)")
+            print("   - Offline corpus not loaded")
+            print("   - Online retrieval timed out and offline also failed")
+        } else {
+            print("🔍 RAG retrieved \(cachedRAGChunks.count) chunks for query: '\(query)'")
+            for chunk in cachedRAGChunks.prefix(2) {
+                print("   - \(chunk.title) (score: \(String(format: "%.2f", chunk.similarity)))")
             }
         }
-
-        // Then query-specific results
-        for chunk in queryChunks {
-            if seen.insert(chunk.id).inserted {
-                mergedChunks.append(chunk)
-            }
-        }
-
-        cachedRAGChunks = Array(mergedChunks.prefix(5))
+        
         buildSystemPrompt(alert: alert, ragChunks: cachedRAGChunks, updates: authorityUpdates)
     }
 
@@ -454,53 +467,38 @@ class VoiceAgentService: ObservableObject {
         ragChunks: [RAGChunk],
         updates: [String]
     ) {
-        var contextParts: [String] = []
-
-        // Alert context
-        contextParts.append("""
-        CURRENT ALERT:
-        Title: \(alert.title)
-        Severity: \(alert.severity.rawValue.uppercased())
-        Region: \(alert.region)
-        Details: \(alert.body)
-        """)
-
-        // Authority updates (highest priority — override baseline guidance)
-        if !updates.isEmpty {
-            contextParts.append(
-                "LATEST AUTHORITY UPDATES (highest priority — use these over baseline guidance):\n" +
-                updates.enumerated().map { idx, text in
-                    "Update \(idx + 1): \(text)"
-                }.joined(separator: "\n---\n")
-            )
-        }
-
-        // RAG chunks with citations
+        // Build prompt for 1.2B model: MINIMAL formatting, RAG first for priority
+        var promptParts: [String] = [Self.baseSystemPrompt]
+        
+        // RAG chunks - put FIRST after base prompt (high priority for small model)
         if !ragChunks.isEmpty {
-            let chunkTexts = ragChunks.map { chunk in
-                var text = "[\(chunk.title)]"
-                if chunk.isAuthorityUpdate {
-                    text += " [AUTHORITY UPDATE — PRIORITY]"
-                }
-                text += "\n\(chunk.content)"
-                if !chunk.citation.isEmpty {
-                    // Extract source name (before URL if present)
-                    let sourceName = chunk.citation.components(separatedBy: " | ").first ?? chunk.citation
-                    text += "\n— Source: \(sourceName)"
-                }
-                return text
+            let chunkTexts = ragChunks.prefix(3).map { chunk in
+                // Just raw content, no labels
+                chunk.content
             }
-            contextParts.append("REFERENCE INFORMATION (cite sources when relevant):\n\n" + chunkTexts.joined(separator: "\n\n"))
+            promptParts.append("INFORMATION:\n" + chunkTexts.joined(separator: "\n\n"))
+        } else {
+            // Fallback: provide minimal essential tornado safety info when RAG fails
+            promptParts.append("""
+INFORMATION:
+Go to your basement immediately. If no basement, go to the lowest floor interior room away from windows. Get under sturdy furniture. Protect your head and neck. In a high-rise, take stairs to lowest floor, use interior hallway. Stay away from windows and exterior walls.
+""")
         }
-
-        let context = contextParts.joined(separator: "\n\n")
-
-        systemPrompt = """
-        \(Self.baseSystemPrompt)
-
-        CONTEXT:
-        \(context)
-        """
+        
+        // Alert context (brief)
+        promptParts.append("CURRENT SITUATION: \(alert.title)")
+        
+        // Authority updates (if any, keep brief)
+        if !updates.isEmpty {
+            let updateText = updates.prefix(2).joined(separator: " ")
+            promptParts.append("URGENT: \(updateText)")
+        }
+        
+        systemPrompt = promptParts.joined(separator: "\n\n")
+        
+        // Debug logging
+        let ragInfo = ragChunks.isEmpty ? "NO RAG" : "\(ragChunks.count) chunks"
+        print("📋 Prompt: \(systemPrompt.count) chars, \(ragInfo)")
     }
 
     private func buildGreeting(alert: AlertModel) -> String {
@@ -534,6 +532,191 @@ class VoiceAgentService: ObservableObject {
         @unknown default:
             return false
         }
+    }
+
+    // MARK: - Response Processing
+    
+    /// Detect if user wants to end the session.
+    private func detectEndSessionIntent(_ text: String) -> Bool {
+        let lowercased = text.lowercased()
+        let endPhrases = [
+            "i am done",
+            "i'm done",
+            "that's all",
+            "that is all",
+            "stop",
+            "goodbye",
+            "good bye",
+            "bye",
+            "exit",
+            "quit",
+            "end session",
+            "no more questions",
+            "thank you goodbye",
+            "thanks bye"
+        ]
+        
+        for phrase in endPhrases {
+            if lowercased.contains(phrase) {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /// Write a line to the local transcript file for debugging.
+    private func writeToTranscript(_ line: String) {
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let entry = "\(timestamp) | \(line)\n"
+        
+        guard let data = entry.data(using: .utf8) else {
+            print("❌ Failed to encode transcript line to UTF8")
+            return
+        }
+        
+        do {
+            if FileManager.default.fileExists(atPath: transcriptFileURL.path) {
+                let fileHandle = try FileHandle(forWritingTo: transcriptFileURL)
+                fileHandle.seekToEndOfFile()
+                fileHandle.write(data)
+                fileHandle.closeFile()
+            } else {
+                try data.write(to: transcriptFileURL, options: .atomic)
+                print("✅ Created transcript file at: \(transcriptFileURL.path)")
+            }
+        } catch {
+            print("❌ Failed to write transcript: \(error.localizedDescription)")
+            print("   Attempted path: \(transcriptFileURL.path)")
+        }
+    }
+    
+    /// Clear transcript file at start of new session.
+    private func clearTranscript() {
+        if FileManager.default.fileExists(atPath: transcriptFileURL.path) {
+            do {
+                try FileManager.default.removeItem(at: transcriptFileURL)
+                print("🗑️ Cleared previous transcript file")
+            } catch {
+                print("⚠️ Failed to clear transcript: \(error.localizedDescription)")
+            }
+        }
+        writeToTranscript("=== NEW SESSION ===")
+    }
+    
+    /// Detect if model hallucinated dangerous or nonsensical advice.
+    /// Small models (350M) often make things up - catch and reject these.
+    private func containsDangerousHallucination(_ response: String) -> Bool {
+        let lowercased = response.lowercased()
+        
+        // ONLY block if advising to shelter IN car (not just mentioning cars)
+        let carShelterPatterns = [
+            "go.*car",
+            "stay.*car",
+            "shelter.*car",
+            "backseat",
+            "back seat",
+            "center.*car"
+        ]
+        
+        for pattern in carShelterPatterns {
+            if lowercased.range(of: pattern, options: .regularExpression) != nil {
+                return true
+            }
+        }
+        
+        // Other dangerous hallucinations
+        let dangerousPhrases = [
+            "stay outside",
+            "go outside",
+            "basement is dangerous",
+            "basement.*most damage",  // "basement is where tornado causes most damage"
+            "read this out loud",  // Echoing system prompt
+            "information section",  // Echoing system prompt
+            "according to this",  // Meta-reference
+            "the user wants"  // Echoing system reasoning
+        ]
+        
+        for phrase in dangerousPhrases {
+            if lowercased.contains(phrase) || lowercased.range(of: phrase, options: .regularExpression) != nil {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /// Enforce maximum 3 sentences to prevent rambling.
+    /// Small models (350M) often ignore length instructions, so we truncate post-generation.
+    private func enforceResponseLength(_ response: String) -> String {
+        let trimmed = response.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Split by sentence-ending punctuation
+        let sentencePattern = #"[.!?]+"#
+        guard let regex = try? NSRegularExpression(pattern: sentencePattern) else {
+            return trimmed
+        }
+        
+        let range = NSRange(trimmed.startIndex..., in: trimmed)
+        let matches = regex.matches(in: trimmed, range: range)
+        
+        // If we have 3 or fewer sentences, return as-is
+        guard matches.count > 3 else { return trimmed }
+        
+        // Truncate after 3rd sentence
+        let thirdSentenceEnd = matches[2].range.upperBound
+        if let swiftRange = Range(NSRange(location: 0, length: thirdSentenceEnd), in: trimmed) {
+            return String(trimmed[swiftRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        return trimmed
+    }
+    
+    // MARK: - Voice Query Preprocessing
+    
+    /// Preprocess voice queries to improve RAG retrieval quality.
+    /// Handles: removing filler words, expanding contractions, normalizing question patterns.
+    private func preprocessVoiceQuery(_ query: String) -> String {
+        var cleaned = query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove common filler words and hesitations that don't help retrieval
+        let fillers = ["um", "uh", "like", "you know", "i mean", "sort of", "kind of"]
+        for filler in fillers {
+            cleaned = cleaned.replacingOccurrences(of: " \(filler) ", with: " ")
+            cleaned = cleaned.replacingOccurrences(of: "^\(filler) ", with: "", options: .regularExpression)
+        }
+        
+        // Expand common contractions for better matching
+        let contractions = [
+            "what's": "what is",
+            "where's": "where is",
+            "how's": "how is",
+            "i'm": "i am",
+            "we're": "we are",
+            "they're": "they are",
+            "can't": "cannot",
+            "don't": "do not",
+            "won't": "will not",
+            "shouldn't": "should not",
+            "isn't": "is not",
+            "aren't": "are not"
+        ]
+        for (contraction, expanded) in contractions {
+            cleaned = cleaned.replacingOccurrences(of: contraction, with: expanded)
+        }
+        
+        // Normalize common question starts to improve retrieval
+        if cleaned.hasPrefix("can you tell me ") {
+            cleaned = String(cleaned.dropFirst("can you tell me ".count))
+        }
+        if cleaned.hasPrefix("could you tell me ") {
+            cleaned = String(cleaned.dropFirst("could you tell me ".count))
+        }
+        if cleaned.hasPrefix("do you know ") {
+            cleaned = String(cleaned.dropFirst("do you know ".count))
+        }
+        
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     // MARK: - Audio Session Management
@@ -885,15 +1068,57 @@ class VoiceAgentService: ObservableObject {
             return
         }
 
-        // Skip empty or very short transcriptions
+        // Enhanced logging for debugging
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print("👤 USER: \(transcription)")
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        
+        // Write to local transcript file
+        writeToTranscript("👤 USER: \(transcription)")
+
+        lastUserText = transcription
+        onUserTranscript?(transcription)
+
+        // Minimal question validation: Skip if empty after trimming
         let trimmed = transcription.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 2 else {
+        guard !trimmed.isEmpty else {
+            print("⚠️ Transcription was empty, resuming listening")
             await startListeningLoop()
+            return
+        }
+        
+        // Check for session-ending intent
+        if detectEndSessionIntent(trimmed) {
+            print("🛑 User requested to end session")
+            let farewell = "Okay, stay safe. You can reopen the app anytime if you need more help."
+            lastAgentText = farewell
+            onAgentResponse?(farewell)
+            await speakAgent(farewell)
+            stop()
             return
         }
 
         lastUserText = trimmed
         onUserTranscript?(trimmed)
+        
+        // If waiting for satisfaction response, don't process as question
+        if awaitingSatisfactionResponse {
+            awaitingSatisfactionResponse = false
+            // Acknowledge and resume
+            let ack = "Thank you for your feedback. Ask me anything else if you need help."
+            lastAgentText = ack
+            onAgentResponse?(ack)
+            
+            // Log to telemetry (was missing!)
+            TelemetryService.shared.recordAgentResponse(
+                incidentCode: currentIncidentCode,
+                responseText: ack
+            )
+            
+            await speakAgent(ack)
+            await startListeningLoop()
+            return
+        }
 
         // Record telemetry
         TelemetryService.shared.recordQuestion(
@@ -932,18 +1157,45 @@ class VoiceAgentService: ObservableObject {
             return
         }
 
-        lastAgentText = response
-        onAgentResponse?(response)
+        // Post-process: enforce 3-sentence limit and validate for hallucinations
+        var cleanedResponse = enforceResponseLength(response)
+        var wasHallucination = false
+        
+        // CRITICAL: Detect dangerous hallucinations before speaking
+        if containsDangerousHallucination(cleanedResponse) {
+            wasHallucination = true
+            print("⚠️⚠️⚠️ HALLUCINATION DETECTED - REPLACED WITH SAFE FALLBACK ⚠️⚠️⚠️")
+            print("Original (blocked): \(cleanedResponse)")
+            cleanedResponse = "Go to your basement or lowest floor interior room immediately. Stay away from all windows and exterior walls. Call 911 if you need immediate help."
+        }
+        
+        // Enhanced logging for debugging
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print("🤖 AGENT\(wasHallucination ? " [FALLBACK]" : ""): \(cleanedResponse)")
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        
+        // Write to local transcript file
+        writeToTranscript("🤖 AGENT\(wasHallucination ? " [FALLBACK]" : ""): \(cleanedResponse)")
+        
+        // Record full response to telemetry for quality analysis
+        TelemetryService.shared.recordAgentResponse(
+            incidentCode: currentIncidentCode,
+            responseText: "\(wasHallucination ? "[HALLUCINATION_BLOCKED] " : "")\(cleanedResponse)"
+        )
+        
+        lastAgentText = cleanedResponse
+        onAgentResponse?(cleanedResponse)
 
         // Increment completed turns
         completedTurns += 1
 
         // === TTS Phase ===
-        await speakAgent(response)
+        await speakAgent(cleanedResponse)
 
         // === Satisfaction prompt after 3+ turns (once per session) ===
-        if completedTurns >= 3 && !satisfactionPrompted && isConversationActive {
+        if completedTurns >= 3 && !satisfactionPrompted {
             satisfactionPrompted = true
+            awaitingSatisfactionResponse = true
             let satisfactionPromptText = "Was that information helpful? You can say yes or no."
             lastAgentText = satisfactionPromptText
             onAgentResponse?(satisfactionPromptText)
@@ -965,15 +1217,112 @@ class VoiceAgentService: ObservableObject {
         isSpeaking = true
         onStateChange?(.speaking)
 
+        // Sanitize text for TTS (remove markdown, special chars)
+        let cleanText = sanitizeForTTS(text)
+
         do {
-            try await runAnywhereManager.speak(text)
+            try await runAnywhereManager.speak(cleanText)
         } catch {
             // Fallback: use system AVSpeechSynthesizer
             print("⚠️ RunAnywhere TTS failed, using system voice: \(error)")
-            await speakWithSystemVoice(text)
+            await speakWithSystemVoice(cleanText)
         }
 
         isSpeaking = false
+    }
+    
+    /// Sanitize text for TTS to prevent reading markdown and special characters aloud.
+    private func sanitizeForTTS(_ text: String) -> String {
+        var cleaned = text
+        
+        // CRITICAL: Fix emergency number pronunciation
+        // "911" should be "nine one one" not "nine hundred eleven"
+        cleaned = cleaned.replacingOccurrences(of: "911", with: "nine one one")
+        cleaned = cleaned.replacingOccurrences(of: "9-1-1", with: "nine one one")
+        
+        // Fix phone numbers by converting each digit to words
+        // Pattern: XXX-XXX-XXXX or similar formats
+        let digitMap = ["0": "zero", "1": "one", "2": "two", "3": "three", "4": "four",
+                       "5": "five", "6": "six", "7": "seven", "8": "eight", "9": "nine"]
+        
+        // Match phone numbers: 3-4 digits, dash, 3-4 digits, dash, 3-4 digits
+        let phonePattern = #"\b(\d{3,4})-(\d{3,4})-(\d{3,4})\b"#
+        if let regex = try? NSRegularExpression(pattern: phonePattern) {
+            var result = cleaned
+            let matches = regex.matches(in: cleaned, range: NSRange(cleaned.startIndex..., in: cleaned))
+            
+            // Process matches in reverse to maintain string indices
+            for match in matches.reversed() {
+                if let range = Range(match.range, in: cleaned) {
+                    let phoneNumber = String(cleaned[range])
+                    // Convert each digit to word
+                    let spokenPhone = phoneNumber.map { char in
+                        if let digit = digitMap[String(char)] {
+                            return digit
+                        } else if char == "-" {
+                            return ""  // Remove dashes
+                        }
+                        return String(char)
+                    }.joined(separator: " ")
+                    
+                    result = result.replacingCharacters(in: range, with: spokenPhone)
+                }
+            }
+            cleaned = result
+        }
+        
+        // Remove phrases the model might echo from system prompt
+        let systemPromptLeakage = [
+            "REFERENCE INFORMATION",
+            "reference chunks",
+            "cite these sources when answering",
+            "According to the context",
+            "Based on the reference",
+            "AUTHORITY UPDATE",
+            "PRIORITY"
+        ]
+        for phrase in systemPromptLeakage {
+            cleaned = cleaned.replacingOccurrences(of: phrase, with: "", options: .caseInsensitive)
+        }
+        
+        // Remove markdown bold/italic markers
+        cleaned = cleaned.replacingOccurrences(of: "**", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "__", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "*", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "_", with: "")
+        
+        // Remove markdown headers
+        cleaned = cleaned.replacingOccurrences(of: "###", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "##", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "#", with: "")
+        
+        // Remove markdown code blocks and inline code
+        cleaned = cleaned.replacingOccurrences(of: "```", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "`", with: "")
+        
+        // Remove brackets that might be read as "open bracket" / "close bracket"
+        cleaned = cleaned.replacingOccurrences(of: "[", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "]", with: "")
+        
+        // Remove parentheses around citations or asides (keep content)
+        cleaned = cleaned.replacingOccurrences(of: "(", with: "")
+        cleaned = cleaned.replacingOccurrences(of: ")", with: "")
+        
+        // Replace em dash and en dash with natural pause
+        cleaned = cleaned.replacingOccurrences(of: "—", with: ", ")
+        cleaned = cleaned.replacingOccurrences(of: "–", with: ", ")
+        
+        // Remove extra whitespace and fix sentence breaks
+        cleaned = cleaned.replacingOccurrences(of: "  ", with: " ")
+        cleaned = cleaned.replacingOccurrences(of: "\n\n", with: ". ")
+        cleaned = cleaned.replacingOccurrences(of: "\n", with: ". ")
+        
+        // Clean up multiple periods or commas
+        cleaned = cleaned.replacingOccurrences(of: "..", with: ".")
+        cleaned = cleaned.replacingOccurrences(of: ",,", with: ",")
+        cleaned = cleaned.replacingOccurrences(of: ". .", with: ".")
+        
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Fallback TTS using Apple's built-in AVSpeechSynthesizer.

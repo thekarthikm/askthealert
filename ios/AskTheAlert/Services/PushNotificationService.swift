@@ -18,8 +18,14 @@ actor PushNotificationService {
 
     /// Backend base URL. In production this comes from a config; for hackathon, hardcoded.
     private let baseURL: String = {
-        // Default to localhost; on real device, use a tunnel or LAN IP
-        ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "http://localhost:3001"
+        if let configured = ProcessInfo.processInfo.environment["API_BASE_URL"], !configured.isEmpty {
+            return configured
+        }
+        #if targetEnvironment(simulator)
+        return "http://localhost:3001"
+        #else
+        return "http://HKs-MacBook-Air.local:3001"
+        #endif
     }()
 
     private static let pendingTokenKey = "askthealert_pending_device_token"

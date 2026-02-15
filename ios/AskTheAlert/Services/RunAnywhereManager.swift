@@ -34,15 +34,15 @@ import ONNXRuntime
 /// Ref: https://github.com/RunanywhereAI/runanywhere-sdks/tree/main/Playground/swift-starter-app
 enum ModelConfig {
     // -- Model IDs (must match IDs passed to registerModel) ----------------
-    /// LiquidAI LFM2 350M Q4_K_M — compact, fast LLM for emergency responses.
-    static let llmModelId = "lfm2-350m-q4_k_m"
+    /// Qwen2.5 0.5B Instruct Q4_K_M — balanced quality and size for emergency guidance.
+    static let llmModelId = "qwen2.5-0.5b-instruct-q4_k_m"
     /// Sherpa Whisper Tiny (English) — fast on-device STT.
     static let sttModelId = "sherpa-onnx-whisper-tiny.en"
     /// Piper TTS US English Lessac Medium — natural neural voice.
     static let ttsVoiceId = "vits-piper-en_US-lessac-medium"
 
     // -- Download URLs -----------------------------------------------------
-    static let llmURL = "https://huggingface.co/LiquidAI/LFM2-350M-GGUF/resolve/main/LFM2-350M-Q4_K_M.gguf"
+    static let llmURL = "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"
     static let sttURL = "https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/sherpa-onnx-whisper-tiny.en.tar.gz"
     static let ttsURL = "https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/vits-piper-en_US-lessac-medium.tar.gz"
 }
@@ -166,14 +166,14 @@ class RunAnywhereManager: ObservableObject {
     /// Must be called AFTER `RunAnywhere.initialize()` and BEFORE any download/load calls.
     /// Ref: Playground/swift-starter-app/LocalAIPlayground/Services/ModelService.swift
     private static func registerModels() {
-        // LLM — LiquidAI LFM2 350M (GGUF format, runs via LlamaCPP)
+        // LLM — Qwen2.5 0.5B Instruct (GGUF format, runs via LlamaCPP)
         if let llmURL = URL(string: ModelConfig.llmURL) {
             RunAnywhere.registerModel(
                 id: ModelConfig.llmModelId,
-                name: "LiquidAI LFM2 350M Q4_K_M",
+                name: "Qwen2.5 0.5B Instruct Q4_K_M",
                 url: llmURL,
                 framework: .llamaCpp,
-                memoryRequirement: 250_000_000
+                memoryRequirement: 398_000_000  // ~398MB for Q4_K_M quantization
             )
         }
 

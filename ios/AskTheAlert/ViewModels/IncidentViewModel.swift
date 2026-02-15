@@ -159,7 +159,7 @@ class IncidentViewModel: ObservableObject {
         let chunks = await ragService.retrieve(
             query: query,
             incidentCode: alert.incidentCode,
-            topK: 5,
+            topK: 7,
             hazardFilter: "tornado"
         )
         return chunks
@@ -213,13 +213,9 @@ class IncidentViewModel: ObservableObject {
                         incidentCode: self.incidentCode,
                         satisfied: satisfied
                     )
-                } else {
-                    // Record telemetry as a question
-                    TelemetryService.shared.recordQuestion(
-                        incidentCode: self.incidentCode,
-                        shortText: String(text.prefix(200))
-                    )
                 }
+                // Note: VoiceAgentService already records all user questions to telemetry,
+                // so we don't duplicate that here. Only satisfaction responses are recorded here.
             }
         }
 

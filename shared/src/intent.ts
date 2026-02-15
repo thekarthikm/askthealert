@@ -15,6 +15,7 @@ export type IntentCategory =
   | "water_utilities"
   | "reporting_witnessing"
   | "medical_immediate_danger"
+  | "family_safety"
   | "general_clarification"
   | "other_unclear";
 
@@ -28,6 +29,7 @@ export const INTENT_LABELS: Record<IntentCategory, string> = {
   water_utilities: "Water safety and utilities",
   reporting_witnessing: "Reporting or witnessing something",
   medical_immediate_danger: "Medical or immediate danger",
+  family_safety: "Family and children safety",
   general_clarification: "General clarification",
   other_unclear: "Other / unclear",
 };
