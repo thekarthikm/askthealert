@@ -6,7 +6,7 @@
 
 This project deeply integrates **RunAnywhere SDK** for on-device AI, enabling:
 - **Offline voice agent**: Full STT → LLM → TTS pipeline runs locally on iPhone
-- **1.2B parameter model**: Fast, efficient responses even without internet
+- **Qwen2.5 0.5B model**: Fast, efficient responses optimized for mobile devices
 - **Privacy-first**: All voice processing happens on-device, no cloud dependency
 - **Sub-second latency**: Real-time conversational experience during emergencies
 
@@ -177,10 +177,10 @@ askthealert/
 ### Voice Agent Pipeline
 The entire voice interaction is powered by RunAnywhere:
 
-1. **Speech-to-Text (STT)**: User speech → text transcription on-device
+1. **Speech-to-Text (STT)**: User speech → text transcription on-device (Sherpa Whisper Tiny)
 2. **RAG Context Injection**: Hybrid retrieval injects safety guidance into prompt
-3. **LLM Response**: 1.2B parameter model generates contextual answer locally
-4. **Text-to-Speech (TTS)**: Response spoken back to user immediately
+3. **LLM Response**: Qwen2.5 0.5B model generates contextual answer locally
+4. **Text-to-Speech (TTS)**: Response spoken back to user immediately (Piper TTS)
 
 ### Key Implementation Details
 
@@ -230,11 +230,11 @@ User opens alert → Taps microphone → Asks: "What should I do now?"
 
 **Behind the scenes:**
 - VAD detects speech end
-- RunAnywhere STT transcribes question on-device
+- RunAnywhere STT transcribes question on-device (Sherpa Whisper Tiny)
 - RAG retrieves relevant tornado safety chunks (offline BM25 + online semantic)
 - System prompt built with RAG context
-- RunAnywhere LLM generates answer locally (1.2B model)
-- RunAnywhere TTS speaks response immediately
+- RunAnywhere LLM generates answer locally (Qwen2.5 0.5B)
+- RunAnywhere TTS speaks response immediately (Piper TTS)
 - Telemetry logged and queued for upload
 
 ### 3. Authority Intelligence
