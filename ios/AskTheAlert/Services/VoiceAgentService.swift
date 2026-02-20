@@ -467,7 +467,7 @@ class VoiceAgentService: ObservableObject {
         ragChunks: [RAGChunk],
         updates: [String]
     ) {
-        // Build prompt for 1.2B model: MINIMAL formatting, RAG first for priority
+        // Build prompt for Qwen2.5 0.5B model: MINIMAL formatting, RAG first for priority
         var promptParts: [String] = [Self.baseSystemPrompt]
         
         // RAG chunks - put FIRST after base prompt (high priority for small model)

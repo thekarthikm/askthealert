@@ -33,7 +33,7 @@
     "hazardTags": ["tornado"],
     "regionTags": ["waterloo_region"],
     "citation": "City of Waterloo Emergency Preparedness | Environment Canada – Tornado Safety",
-    "keywords": ["shelter", "basement", "lowest level", "interior room", "safe room", "hide", "protection", "house", "home", "where to go", "what should i do", "what do i do", "what to do", "what now"],
+    "keywords": ["shelter", "basement", "lowest level", "interior room", "safe room", "hide", "protection", "house", "home", "where to go", "what should i do", "what do i do", "what to do", "what now", "should I leave", "leave now", "should I go"],
     "synonyms": {
       "shelter": ["hide", "safe place", "protection", "cover", "take cover"],
       "basement": ["lower level", "underground", "cellar", "downstairs"],
@@ -47,7 +47,7 @@
     "hazardTags": ["tornado"],
     "regionTags": ["waterloo_region"],
     "citation": "Environment Canada – Tornado Safety | City of Waterloo Emergency Preparedness",
-    "keywords": ["condo", "apartment", "high-rise", "elevator", "interior", "hallway", "bathroom", "building", "flat", "unit", "stairs"],
+    "keywords": ["condo", "apartment", "high-rise", "elevator", "interior", "hallway", "bathroom", "building", "flat", "unit", "stairs", "no basement", "don't have a basement", "don't have basement", "live in a high-rise"],
     "synonyms": {
       "condo": ["apartment", "flat", "unit", "high-rise", "building", "tower"],
       "elevator": ["lift", "escalator"]
@@ -125,7 +125,7 @@
     "hazardTags": ["tornado", "evacuation"],
     "regionTags": ["waterloo_region"],
     "citation": "Region of Waterloo Emergency Management | AlertWR – Emergency Alerts",
-    "keywords": ["evacuate", "leave", "evacuation", "routes", "order", "stay", "go", "should I leave", "should I stay"],
+    "keywords": ["evacuate", "evacuation", "evacuation order", "evacuation routes", "official order", "should I stay"],
     "synonyms": {
       "evacuate": ["leave", "get out", "flee", "go away", "run"],
       "stay": ["remain", "shelter in place", "don't leave"]
