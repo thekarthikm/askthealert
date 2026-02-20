@@ -253,7 +253,13 @@ class VoiceAgentService: ObservableObject {
 
     /// Default system prompt (no RAG context).
     private static let baseSystemPrompt = """
-    Answer in English only. Use ONLY the INFORMATION below. Keep answers short (2 sentences). Do not add facts not in INFORMATION.
+    You answer tornado safety questions in English only. You MUST use ONLY the INFORMATION below.
+
+    RULES:
+    1. Read INFORMATION carefully
+    2. Answer using ONLY what INFORMATION says
+    3. Keep answers SHORT (2-3 sentences max)
+    4. If INFORMATION doesn't have the answer, say: "I don't have that information."
     """
 
     // MARK: - Lifecycle
@@ -472,9 +478,10 @@ class VoiceAgentService: ObservableObject {
         
         // RAG chunks - put FIRST after base prompt (high priority for small model)
         if !ragChunks.isEmpty {
-            // Use only top 1 chunk to keep context focused for 0.5B model
-            let topChunk = ragChunks.first!
-            promptParts.append("INFORMATION:\n" + topChunk.content)
+            let chunkTexts = ragChunks.prefix(3).map { chunk in
+                chunk.content
+            }
+            promptParts.append("INFORMATION:\n" + chunkTexts.joined(separator: "\n\n"))
         } else {
             // Fallback: provide minimal essential tornado safety info when RAG fails
             promptParts.append("""
