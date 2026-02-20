@@ -127,7 +127,7 @@
     "citation": "Region of Waterloo Emergency Management | AlertWR – Emergency Alerts",
     "keywords": ["evacuate", "evacuation", "evacuation order", "evacuation routes", "official order", "should I stay"],
     "synonyms": {
-      "evacuate": ["leave", "get out", "flee", "go away", "run"],
+      "evacuate": ["get out", "flee", "go away", "run"],
       "stay": ["remain", "shelter in place", "don't leave"]
     }
   },

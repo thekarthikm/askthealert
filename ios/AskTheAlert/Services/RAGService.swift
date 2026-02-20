@@ -219,7 +219,7 @@ actor RAGService {
             "basement": Set(["cellar", "lower level", "underground", "downstairs"]),
             "warning": Set(["emergency", "imminent", "take cover", "act now", "danger"]),
             "watch": Set(["advisory", "heads up", "get ready", "be prepared"]),
-            "evacuate": Set(["leave", "get out", "flee", "run", "go away"]),
+            "evacuate": Set(["get out", "flee", "run", "go away"]),
             "safe": Set(["secure", "protected", "ok", "okay", "alright", "fine"]),
             "danger": Set(["unsafe", "risk", "threat", "hazard", "peril"]),
             "injured": Set(["hurt", "wounded", "harmed", "cut", "broken"]),
@@ -385,9 +385,14 @@ actor RAGService {
                 totalScore += idf * titleBoost
             }
 
-            // Keyword field boost
+            // Keyword field boost (single token match)
             if keywordSet.contains(term) {
                 totalScore += idf * keywordBoost
+            }
+
+            // Phrase keyword boost: check if any multi-word keyword contains this term
+            for kw in keywordTokens where kw.contains(" ") && kw.contains(term) {
+                totalScore += idf * keywordBoost * 0.5
             }
         }
 
@@ -570,11 +575,11 @@ actor RAGService {
     private let stopwords: Set<String> = [
         "a", "an", "the", "is", "it", "in", "on", "at", "to", "of", "for",
         "and", "or", "but", "if", "by", "as", "be", "am", "are", "was",
-        "were", "been", "being", "have", "has", "had", "do", "does", "did",
+        "were", "been", "being", "have", "has", "had", "does", "did",
         "will", "would", "could", "should", "can", "may", "might", "shall",
         "not", "no", "so", "up", "out", "just", "than", "then", "too",
-        "very", "what", "which", "who", "whom", "this", "that", "these",
-        "those", "my", "your", "his", "her", "its", "our", "their", "me",
+        "very", "which", "who", "whom", "this", "that", "these",
+        "those", "your", "his", "her", "its", "our", "their", "me",
         "him", "us", "them", "i", "we", "you", "he", "she", "they",
         "with", "from", "about", "into", "through", "during", "before",
         "after", "above", "below", "between", "under", "again", "further",
