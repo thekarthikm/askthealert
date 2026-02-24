@@ -4,6 +4,21 @@
  * Uses a shared secret (demo-friendly) stored in session storage.
  * The login gate validates the secret against the backend before granting access.
  * Even for demo, every endpoint is protected — no open access to push or telemetry.
+ *
+ * ⚠️ SECURITY LIMITATION (HACKATHON ONLY):
+ * Storing auth secrets in sessionStorage is vulnerable to XSS attacks.
+ * SessionStorage is accessible via JavaScript and visible in browser dev tools.
+ *
+ * For production, migrate to:
+ * - httpOnly cookies (not accessible via JS, safer from XSS)
+ * - Short-lived JWT tokens with refresh mechanism
+ * - OAuth2/OIDC with proper token rotation
+ * - Or reverse proxy authentication (e.g., Cloudflare Access)
+ *
+ * This implementation is acceptable for local development/demo where:
+ * - Console runs on localhost (not exposed to internet)
+ * - Shared secret is rotated after demo
+ * - No user PII or critical operations depend on this auth
  */
 
 "use client";
@@ -60,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (secret: string): Promise<boolean> => {
     const valid = await verifySecret(secret);
     if (valid) {
+      // SECURITY NOTE: sessionStorage is vulnerable to XSS (see file header for production alternatives)
+      // For hackathon demo on localhost, this is acceptable with understanding of limitations
       sessionStorage.setItem(SESSION_KEY, secret);
       // Also set it for the API client env
       (window as unknown as Record<string, unknown>).__AUTH_SECRET = secret;

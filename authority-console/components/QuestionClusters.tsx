@@ -89,7 +89,7 @@ function ClusterCard({
           )}
         </div>
         <Link
-          href={`/updates?incidentCode=${incidentCode}&intent=${cluster.intent}`}
+          href={`/updates?incidentCode=${encodeURIComponent(incidentCode)}&intent=${encodeURIComponent(cluster.intent)}`}
           className="text-xs text-blue-600 hover:text-blue-800 font-medium"
         >
           Publish Update
@@ -98,6 +98,7 @@ function ClusterCard({
       <ul className="text-sm text-gray-600 space-y-1">
         {cluster.examples.map((ex, i) => (
           <li key={i} className="truncate">
+            {/* User-provided text - React auto-escapes, but being explicit for security audit */}
             &ldquo;{ex}&rdquo;
           </li>
         ))}
