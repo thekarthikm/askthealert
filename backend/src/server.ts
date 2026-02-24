@@ -31,6 +31,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
 import { devicesRouter } from "./routes/devices.js";
 import { alertsRouter } from "./routes/alerts.js";
@@ -51,13 +52,36 @@ const app = express();
 
 // ── Global middleware ──────────────────────────────────────
 app.use(helmet());
+
+// CORS: environment-specific allowed origins
+const allowedOrigins = env.NODE_ENV === "production"
+  ? ["https://your-console-domain.com"] // Replace with actual production console URL
+  : ["http://localhost:3000", "http://localhost:5173"]; // Dev: Vite + standard React dev servers
+
 app.use(
   cors({
-    origin: true, // Allow all origins (configured per-env in production)
-    credentials: true,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS policy: Origin ${origin} not allowed`));
+      }
+    },
+    credentials: true, // Required for cookies (not currently used, but kept for future auth upgrades)
   })
 );
 app.use(express.json({ limit: "1mb" }));
+
+// Rate limiting for public endpoints to prevent abuse
+const publicEndpointLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: env.NODE_ENV === "production" ? 100 : 1000, // 100 requests per 15min in prod, 1000 in dev
+  message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ── Health check (no auth) ─────────────────────────────────
 app.get("/health", (_req, res) => {
@@ -69,15 +93,15 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// ── Public routes ──────────────────────────────────────────
+// ── Public routes (rate limited) ──────────────────────────
 // Device registration comes from iOS (no console auth needed)
-app.use("/devices", devicesRouter);
+app.use("/devices", publicEndpointLimiter, devicesRouter);
 
 // Telemetry ingest comes from iOS (no console auth needed)
-app.use("/telemetry", telemetryRouter);
+app.use("/telemetry", publicEndpointLimiter, telemetryRouter);
 
 // Consent policy and PII check (public — iOS fetches on launch)
-app.use("/consent", consentRouter);
+app.use("/consent", publicEndpointLimiter, consentRouter);
 
 // ── SSE stream (auth via query param — EventSource limitation) ──
 app.use("/stream", streamRouter);

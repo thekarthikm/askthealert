@@ -11,6 +11,21 @@
  *
  * This runs server-side as a second defence layer. The iOS client should
  * also strip PII before sending, but we enforce it here for safety.
+ *
+ * ⚠️ SECURITY WARNING (LIMITATIONS):
+ * Regex-based PII redaction will MISS edge cases:
+ *   - Names without prefixes ("John called 911", "Sarah's location")
+ *   - Non-standard address formats ("behind the Walmart on Victoria")
+ *   - Location landmarks ("near King and University intersection")
+ *   - Uncommon phone formats (international, extensions)
+ *   - Embedded identifiers in natural speech patterns
+ *
+ * For production, consider additional safeguards:
+ *   - Text length caps (e.g., max 200 chars per event)
+ *   - Allowlist strategy: store only intent_label + topic_summary
+ *   - ML-based NER (Named Entity Recognition) for better coverage
+ *   - Mandatory client-side stripping before transmission
+ *   - Periodic audits of stored text for PII leakage
  */
 
 /** Compiled regex patterns for PII detection. */

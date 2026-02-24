@@ -5,7 +5,7 @@
  * Idempotent: duplicate eventIds are ignored (upsert on event_id).
  * Server sets serverTimestamp on ingest.
  * PII minimization: redacts phone numbers, emails, SINs, addresses from shortText.
- * Consent field: only stores events where consentGiven is true (or defaults true).
+ * Consent field: only stores events where consentGiven is explicitly true (defaults false).
  *
  * After ingest, refreshes intent clusters for affected incidents.
  */
@@ -23,8 +23,8 @@ const eventSchema = z.object({
   incidentCode: z.string().min(1),
   eventType: z.enum(["received", "opened", "spoke", "question", "satisfaction"]),
   deviceTimestamp: z.string().datetime(),
-  /** Whether the user consented to telemetry collection. Defaults true. */
-  consentGiven: z.boolean().default(true),
+  /** Whether the user consented to telemetry collection. Defaults false - requires explicit opt-in. */
+  consentGiven: z.boolean().default(false),
   payload: z.object({
     intentLabel: z.string().optional(),
     shortText: z.string().optional(),

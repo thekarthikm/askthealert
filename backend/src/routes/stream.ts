@@ -13,6 +13,15 @@
  *
  * Auth: requires console auth secret in query param for SSE
  * (Authorization header not supported by EventSource).
+ *
+ * ⚠️ SECURITY WARNING (HACKATHON LIMITATION):
+ * Query-string authentication leaks tokens via:
+ *   - Server logs, proxy logs, browser history
+ *   - Screenshots, analytics, referrer headers
+ * For production, migrate to one of:
+ *   - Short-lived signed tokens (minted by authenticated endpoint)
+ *   - Cookie-based auth with SameSite protections
+ *   - Reverse proxy that injects authentication
  */
 
 import { Router } from "express";
