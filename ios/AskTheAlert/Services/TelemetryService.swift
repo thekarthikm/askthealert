@@ -25,15 +25,19 @@ import UIKit
 actor TelemetryService {
     static let shared = TelemetryService()
 
+    private static let defaultBackendURL: String = {
+        #if targetEnvironment(simulator)
+        return "http://localhost:3001"
+        #else
+        return "http://your-mac-hostname.local:3001"  // Replace with your Mac's mDNS hostname
+        #endif
+    }()
+
     private let baseURL: String = {
         if let configured = ProcessInfo.processInfo.environment["API_BASE_URL"], !configured.isEmpty {
             return configured
         }
-        #if targetEnvironment(simulator)
-        return "http://localhost:3001"
-        #else
-        return "http://HKs-MacBook-Air.local:3001"
-        #endif
+        return Self.defaultBackendURL
     }()
 
     /// Persistent event queue key for UserDefaults.

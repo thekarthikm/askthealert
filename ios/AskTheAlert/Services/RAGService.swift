@@ -94,7 +94,7 @@ actor RAGService {
         #if targetEnvironment(simulator)
         return "http://localhost:3001"
         #else
-        return "http://HKs-MacBook-Air.local:3001"
+        return "http://your-mac-hostname.local:3001"
         #endif
     }()
 

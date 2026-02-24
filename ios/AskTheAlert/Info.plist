@@ -41,10 +41,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.askthealert.app</string>
+			<string>com.yourcompany.yourapp</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>askthealert</string>
+				<string>yourappscheme</string>
 			</array>
 		</dict>
 	</array>
